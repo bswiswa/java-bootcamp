@@ -1,0 +1,95 @@
+What is Java?
+-general purpose, object oriented, platform independent, concurrent and very fast programming language.
+-invented in the mid 90s. Similar to C & C++
+-simplicity was the goal. Java has automatic memory management using garbage collection. No manual memory management like C or C++
+-secure
+
+Goals during creation
+- low memory consumption
+- should allow devices to commuicate
+- should be independent of platforms - run on target device with no issues
+- should be secure
+- should support multithreading so that devices can perform other tasks
+C++ was limited due to lack of platform independence
+James Gosling created Oak then renamed Java. It was too advanced and rejected by cable companies.
+HotJava browser created by Sun which made internet interactions more dynamic by embedding Java programs
+First version released in 1996.
+
+Compilation
+- verify syntax & semantics of source code
+- optimize code
+- generates machine code
+
+Platform dependency
+-If processor differs, the software has to be recompiled in order to run
+
+Interpreter
+No compiling. Interpreter handles source code and produces results
+Compiler path: source code -> compiler -> machine code -> CPU -> results
+Interpreter path: source code -> interpreter -> results
+Interpreter is a virtual machine that simulates a CPU. 
+Fetch & Execute cycle:
+      CPU		<- Memory	<- Storage
+      (executes)	-> data
+
+Interpreter also fetches instructions from memory. It understands the statement then executes precompiled machine code in its library.
+As long as a platform has an interpreter suitable for it, code will be made once and run anywhere
+Pros of interpreter:
+     platform independence
+     no compilation step
+     easier to update due to no compilation
+Limitations of intepreter
+	    Slow due to costly memory access. Registers make compiled 
+	    languages much faster
+	    Source code is reinterpreted every time
+	    Interpreter is loaded into memory
+
+Java Intepretation
+     source code -> Java Compiler -> Java byte code(platform independent intermediate) -> JVM (Java virtual machine, dependent on machine) -> results
+
+eg Hello.java (source) -> javac Hello.java [compilation] -> Hello.class (Java byte code) -> Hello.class can now be executed on any platform with JVM via java Hello
+
+Java Speed?
+How is it fast if interpretation is slow?
+- Bytecode interpretations are much faster because Java bytecode is
+  compact, compiled and optimized already. Java Bytecode's compactness also
+  allows quick transfer across networks. Remember that Java was designed to work with multiple types of devices on a network
+- Just-in-time compilation (JIT) - monitors frequently executed bytecodes "hotspots". These hotspots are converted to machine code and cached. This cached machine code is executed faster later from the cache. This is called dynamic compilation. The caching gives Java its speed
+
+Java Virtual Machine
+- the cornerstone of Java
+- is an abstract computing machine
+- executes instruction set (Java bytecode)
+- manipulates memory at runtime
+- is secure across networks
+Abstract JVM specification
+
+Java Software Family
+Java Standard Edition(Java SE)
+     standalone applications for desktops & servers
+Java Enterprise Edition (Java EE)
+     enterprise applications for servers eg e-comerce websites
+     includes Java SE
+Java Micro Edition (Java ME)
+     applications for resource-constrained devices
+
+Java SE 
+Java Runtime Environment
+     	  only run Java programs
+Java Development Kit (JDK)
+	  develop & run Java programs
+
+Java program structure
+     CLASS
+     variable declarations
+     constructors, statements
+     methods
+     nested classes, statements
+
+if you have a class with the modifier public, then the name of the file has to be the same as that class name
+
+main method is invoked first when the Java Virtual Machine (JVM) loads the class bytecodes.
+It must be declared as 
+   public - for JVM to be able to invoke it. otherwise it will not run
+   static
+   void
