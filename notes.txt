@@ -90,6 +90,139 @@ if you have a class with the modifier public, then the name of the file has to b
 
 main method is invoked first when the Java Virtual Machine (JVM) loads the class bytecodes.
 It must be declared as 
-   public - for JVM to be able to invoke it. otherwise it will not run
-   static
-   void
+   public - for JVM to be able to invoke it. otherwise it will not run. public means that you can call the method from outside of the class you are currently in. This is necessary because this method is being called by the Java runtime system which is not located in your current class.
+   static - access modifier which allows us to call this method directly using the class name without creating an object of it. So every function in a class that only performs tasks in it should be static eg static int add_num
+   void - return values mean different things on different platforms. Java is avoiding that problem by having its main method return nothing. There are other ways to exit the program eg System.exit()
+
+Classes & Objects
+OOP roots back to 1960s. Conceived to implement large projects and implement
+real world scenarios in a natural way
+
+Classes are blueprints and objects are instances of objects
+Class members - variables, methods, member classes, member interfaces
+
+class Student{
+//variable declarations
+
+//method declarations
+}
+
+to initialize an object we use the new key word
+the dot operator is used to access the object's state and methods
+
+Java Basics
+     comments //ignore rest of line /*ignore block*/
+     case-sensitive Test != test
+     classes, methods and varialbles must start with letter, underscore or $
+     some reserved keywords like class, interface, enum...
+     Printing to console
+     	      System.out.println(string) - print and go to new line
+	      System.out.print(string) - print and place cursor after the printed string.
+
+Variables
+	containers of data or references to objects.
+	always have a type associated with it and they will hold data of that type
+	variable type also determines the methods that can be performed on that type. 
+	Variable type is declared when the object is created. It cannot be changed thereafter. Thus Java is a statically-typed language. There is static type checking to prevent assigning a type that is not the original type.
+	Dynamically typed languages allow variables to change their types at any point eg JavaScript
+	Static type checking has the advantage that it allows earlier detection of programming mistakes.
+	Variable declaration <type> <name> = [literal or expression]
+	Variable is something whose value can be changed
+Variable Kinds
+	 instance variables or attributes - declared directly in the body of the clas. If not initialized they always have a default value. They represent state specific to each object of a class. Cannot be reinitialized directly within a class. Reinitialization is done within object methods only
+	 static variables - declared in class with keyword static. Is shared by all objects in that class. Only one copy is maintained per class regardless of the number of objects of class. Also get default value and cannot be reinitialized directly within the class.
+	 local variables - declared in methods. Includes method parameters. Not accessible outside of the method. They only exist on the stack when the method is mounted and they are cleared off after its execution. No need for default value.
+
+Variable types
+	 Primitive
+	 8 types - boolean, byte, short, int, long, float, double, char (char is internally represented as an unsigned int)
+	   integers
+		whole or fixed point numbers - byte, short, int, long
+		represented by signed two's complement.
+		Binary addition:
+		Sign-magnitude representation of bits makes the left-most
+		bit 1 for negative and 0 for positive. There are however
+		two problems associated with this representation
+		1. There are two representations of zero eg for 8 bits -
+		1000 0000 and 0000 0000 are -0 and +0
+		2. Binary addition of positive and negative numbers doesn't
+		work - eg add 16 [ 0001 0000 ] to -24 [ 1001 1000 ] = 
+		1010 1000 or -40
+		In order to make binary addition work, we need a way to find
+		a number which when added to another binary number results
+		in 0000 0000 (in a 8 bits for example). In other words for
+		every bit pattern of N bits there is a corresponding bit 
+		pattern of N bits which produces an N-bit zero when the two
+		patterns are used as operands for the binary addition
+		algorithm. Each pattern can be thought of representing the
+		negative of the number that is represented by the other 
+		pattern.
+		This representation is called two's complement. It is 
+		derived as follows: 
+		1. Start with an N-bit representation of an integer
+		2. To calculate the N-bit representation of the negative
+		integer, reflect each bit of the bit pattern
+		(change 0 to 1 and 1 to 0)
+		3. Add one.
+
+		integers represent whole or fixed-point numbers
+		types: byte(8 bit)[-128 to +127], short(16 bit)[-32768 to 32767 (~32 000)], int(32 bit) [-2147483648 to 2147483647 (~2 billion)], long(64bit)
+		default of all ints is 0 for class-level variables, however within methods, they need to be initialized before use
+		long = 10000000L // L required if above the int range
+		int also stores hexadecimal numbers or Java 7 binary or octals. Underscores can be used in between digits to improve readability eg int x = 1_243_300;
+Floatng-Point Numbers
+real numbers with 32 bit float or 64-bit double
+   double is more precise
+   Data representation ~ 32 and 64 bit IEEE 754 flaating point convention
+   float -3.4E38 to 3.4E38 where E is power 10
+   double -1.7E308 to 1.7E308
+   float f = 123.4f //TRAILING F is required (upper or lower case)
+   double d = 123.4 //TRAILING D is optional
+
+   General rule - avoid float and double if exact answers are required. Unsuitable for money calculations. Recommended to use BigDecimal which comes in Java library. You can use int or long but you have to keep track of decimal point yourself.
+Floating point arithmetic is not as fast as integer. In general stick with int and double. double's greater precision is useful. Use float if memery saving is important.
+
+Characters
+represented by 16 bit unsigned integers internally
+range is 0 to 2^16 -1 (since we are not dealing with negative numbers)
+default value is '\u0000' a unicode hexadecimal escape sequence
+Java uses 16 bit unicode scheme (UTF-16) which means that they are first encoded in UTF-16 format (a hexadecimal number) then stored as a 16 bit unsigned int.UTF is one of the implementations of the unicode standards.
+eg 'A' is encoded to hexadecimal 0041 which is then stored as a 16 bit unsigned int 00000000 01000001
+   char c = 'A'; // always in single quotes
+   char c = 65; // can also be declared with an unsigned int. It will be assigned the UTF-16 character corresponding to 65. thus we can add to char variables just like we do with ints
+   char c = '\u0041'; // assigned with a hexadecimal unicode number. Useful if keyboard doesn't allow us to assign certain characters.
+   char c = 0x41; // hexadecimal converted to decimal number and character corresponding to that UTF number is assigned.
+
+Boolean
+Boolean bit storage is JVM specific/ machine specific. Has value of true or \
+false. Default value is false;
+
+Type Casting
+Assign variable or literal of one data type to another type eg change a byte to an int or long to int. It is only available for numeric to numeric casting. Since an character is stored as an unsigned int, it can also be typecasted. Cannot cast to boolean or viceversa.
+Implicit typecasting:
+	 smaller to larger type conversion - widening conversion
+	 eg int x = 65; long y = x; (implicit casting by compiler)
+	 assigning an int to a float is implicit. As long as range of values of the final type is larger than the input type, casting is implicit eg long int to float is implicit. So assigning char to int is implicit.
+
+Explicit typecasting
+	 when assigning a variable of larger range to a smaller range type = narrowing conversion. note that even though char and short are both 16 bits, char has a larger positive range.
+	 long y = 42;
+	 int x = (int)y;
+	 without the above cast we would get a compiler error due to the different type.
+
+* althogh implicit casting is taken care of by the compiler, you can still explicitly cast.
+Out of range assignments result in information loss
+    eg byte narrowByte = (byte)123456; // narrowByte = 64 (only lowest rightmost 8 bits are saved)
+Truncation
+Floating-point to int/char will always truncate the number
+	       eg int x = (int)3.14f; // x = 3;
+	       	  int y = (int)0.9; // y = 0;
+		  char c = (char) 65.5; y = 'A'
+
+Information Loss Implicit Casting
+Assigning int to float or long to float can result in loss of precision. Assigning long to double results in loss as well.
+int and long to float can lose some of the least significant bits during assignement. The same can happen for long to double [both have 64 bits]. int to double is fine though.
+
+You may have to explicitly cast when there is an issue with range of values.
+
+Object references
