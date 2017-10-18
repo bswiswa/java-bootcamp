@@ -226,3 +226,59 @@ int and long to float can lose some of the least significant bits during assigne
 You may have to explicitly cast when there is an issue with range of values.
 
 Object references
+       Student s = new Student();
+       here s is a variable that is an object reference. It holds bits that reference the student object in memory. It is not the object itself. 
+       Student s means allocate memory for a Student reference variable
+       new Student() means allocate memory for a student object
+       Objects are created and stored on the Heap.
+       Default reference of an object reference is null, untill it is explicitly initialized. If you try to reference a member of a null pointer, you will get a NullPointerException.
+
+Statements
+They are what constitutes a program.
+Every statement ends with a semi colon and is a command to be excecuted.
+A statement changes program state.
+3 kinds of statements
+  declarations eg int count = 25;
+  expression statements eg count = 25; count++;
+  control flow statements eg if(count < 100){....}
+  
+  Only declaration statements can be defined at class level. Expression or control flow methods can be part of other sections like methods. 
+
+Arrays
+An array is a data structure. A data structure is an organized collection of related data. An array is a container object that holds a fixed number of values of single type. Since an array is an object it is stored on the heap. The variable referencing it is an object reference.
+Creating an array
+	 int[] myArray = new int[7] // each element by default is zero (default int value)
+	 int[] = new int[]{9,11,2,3}; // no need to specify array size here
+	 int[] myArray = {9,11,2,5};
+	 int myArray[]; is also ok so it is up to you.
+	 so public static void main(String args[]) is oK!
+	 array length = array.length
+Array of Object references
+      Student students[] = new Student[2];
+Random access
+       Linear layout, contiguously -> fast random access. Accessing is O(1) - constant time
+       Searching an array is O(n) however, linear time. This can be modified with data structures.
+Remember that an array is an object that stores a fixed number of elements. All these elements should be of a single type.
+
+2D Arrays
+   Creation: int myArray[][] = new int[4][2]; no. of rows first, columns next [x][y];
+Internally JVM creates a one dimensional array and each element refers to each of the 4 rows. Each element is actually an object reference referring to another int array with 2 elements. So a 2D array is actually implemented as a 1D array with object references. These references point to arrays themselves
+	   Look at array declaration
+	   	type myArray[] -> array of type
+		type myArray[][] -> array of int array
+
+int myArray[][] = new int[][]{ {9,11}, {2,5}, {3,4} }; OR
+int myArray[][] = { {9,11}, {2,5}, {3,4} };
+
+Array with Irregular rows:
+      int myArray[][] = new int[2][];
+      myArray[0] = new int[5];
+      myArray[1] = new int[2];
+      so first row has 5 columns and second row has 2 columns
+      This helps avoid storing duplicate or unwanted rows and save storage space. This is very useful for large matrices.
+.length of a 2D array returns the number of rows it contains
+
+3D Arrays
+Rare in practice.
+int myArray = new int[4][4][4];
+
