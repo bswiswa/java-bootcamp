@@ -282,3 +282,65 @@ Array with Irregular rows:
 Rare in practice.
 int myArray = new int[4][4][4];
 
+Methods
+Variables define object state. Methods define object behavior.
+Methods have self-contained logic that can be used many times
+All software's algorithms are coded into methods and nothing can be achieved without them.
+They can receive input and generate output
+Syntax of a method
+       returnType methodName(type param1, type param2,...){
+
+       		  return someValue;
+		  }
+
+Method signature includes only methodName(type param1, type param2...); so only method name and its parameters, not its return type
+
+Return types
+       void - nothing to return
+       if return type is something other than void, then the method must return something.
+       The return value must be compatible with return type of method eg an int method can return a byte however a byte method can only return a downcasted int or narrowed to byte  since int is larger than byte.
+
+Methods help avoid duplicate code - reduce maintenance headaches
+Divide complex logic into multiple smaller pieces in their own methods - this promotes software reusability, clean and readable code. Each method should do only one thing and no more.
+
+Method types
+       instance methods
+       		Object-level methods
+		Invocation: dot operator eg objectRef.methodName()
+		Affect object state by
+		       affecting instance variables
+		       invoking other instance methods in that class
+	static methods
+	       have keyword static in declaration otherwise they are instance methods
+	       are class-level methods - no access to state ie cannot access
+	       instance variables/methods
+	       can access static variables
+	       invocation: className.methodName()
+	       can access other static methods
+
+Passing Data
+	When primitives are passed to a function, their updates within the function do not affect the state of the variable in the calling environment. However, if an object reference is passed to a method, the object is also updated in the calling environment.
+	Pass by value
+	primitives are stored in 3 components: 
+	<logical name, memory address, value> 
+	At run time, for a primitive variable only memory address and value are available. The memory address is provided by the logical name
+	
+	For object references, <object reference, memory address of actual object>
+
+Pass by value = a copy of the primitive argument is passed
+     Object reference = value of memory address is passed.
+Java is always pass by value; Remember that when object references are passed to methods, it is a reference to the actual object that is passed.
+
+Method Overloading
+multiple methods have the same name but different parameter list.
+to overload a method YOU MUST change either the parameters or parameter types or both. Changing the RETURN TYPE DOESN't MATTER
+Applies to instance and static methods.
+	eg boolean updateProfile(int newID){...}
+	   boolean updateProfile)int newID, char gender){...}
+If two functions have compatible data types, the function that gets called is the one that is closest to the data type submitted
+   eg void overload(int i) {...} and void overload(short i){...} if someone calls byte b = 23; overload(23), then overload(short) is called since it has the next larger data types.
+You would have a compilation error if
+    you try to overload a funtion by just changing the return type eg 
+    void updateProfile(int newId){...} and boolean updateProfile(int newId){...}
+    you will also get an error if you just make the same signature with static.
+In all these you will get a duplicate method error.
