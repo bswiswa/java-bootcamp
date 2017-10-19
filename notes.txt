@@ -344,3 +344,92 @@ You would have a compilation error if
     void updateProfile(int newId){...} and boolean updateProfile(int newId){...}
     you will also get an error if you just make the same signature with static.
 In all these you will get a duplicate method error.
+
+varargs
+from Java 5 onwards methods can have variable number of arguments.These special types of parameters are called varargs and even though it is a single parameter it can take 0, 1 or many arguments. It is always the last parameter specified (or the only one if the method has no other arguments)
+    Syntax: three dots following parameter (called ellipsis) type eg
+    	    foo(boolean flag, int... items)
+Invocation: array of any size eg (from above) foo(true, new int[]{1,2,3});
+	    commma-separated arguments eg foo(true, 1,2,3); here 1,2,3 are the varargs. Here those last three numbers are automatically converted to an array. Within the method the vargarg is treated like a normal array.
+	    The varargs can also be ignored completely eg foo(true). In this case, an empty array will be passed to the varargs parameter.
+	    Varargs restrictions:
+	    	    - must be last variable in the invocation
+		    - cannot have two varargs in an invocation (violates the rule above)
+Why varargs in the first place? Why not just an array?
+    provides simpler and flexible invocation
+    can choose to not use it and function will still run.
+    printf is a method introduced in Java 5 which uses varargs
+    printf(String format, Object....args);
+    eg System.out.printf("DOB: %d/%d/%d", 1,1,1978);
+
+    varargs & main Method
+    public static void main(String args[]){...} OR
+    public static void main(String...args){...}
+
+    varargs & Overloaded methods
+    a vararg is made into an array and so the following are duplicates
+    foo(boolean flag, int...items);
+    foo(boolean flag, int[] items);
+
+    varargs method will be matched last
+
+Constructor
+Runs on object creation. Initializes object state (that is its instance variables)
+     eg Student s = new Student();
+     Student() invokes the constructor
+     Syntax of constructor
+     	    ClassName(type param1, type param2,...){
+	    ...
+	    }
+	    
+	    looks like a method but it does not have a return type
+eg class Student{
+   	 int id;
+	 Student(int newId){
+	 id = newId;
+}
+   
+}
+
+In the above class definition, the constructor is:
+        Student(int newId){
+	 id = newId;
+} and it initializes each new Student object with an id value of newId
+
+If a constructor is not provider, the compiler will create a default constructor called a no-args constructor (no parameters).
+eg class Student{
+   int id;
+} 
+the above class has no class constructor so on compilation, the compiler will add a no-args constructor:
+    class Student{
+    int id:
+    Student(){}
+}
+
+This now allows us to create a new object that we can reference by
+     Student s = new Student();
+Note that once an object has a constructor and that constructor requires a variable, you cannot create a new object using the no-args constructor.
+
+Constructor overloading
+Can be done just like methods. Parameter list must be different. Constructor names are always the same as the class name anyway. 
+Why constructor overloading?
+    to create objects with different capabilities eg Java's file output handling
+    FileOutputStream(String name, boolean append) // open a file and append
+    FileOutputStream(String name) // overwrite the contents of existing file
+    
+Constructors can have a return statement but it doesn't return anything.
+    
+we use this so that we can access instance variables that are hidden (or shadowed) by local variables.
+   class Student{
+   	 int id;
+	 String name;
+	 void updateProfile(int newID, String name){
+	      id = newId;
+	      this.name = name;
+	      }
+}
+
+we use this.name in the updateProfile() method because one of the method parameters is called name which happens to be one of the instance variables of the Class. So anytime you are in the method and you use name, you are referring to the parameter name. You'd have to use this.name in order to get the instance variable. 
+Static methods are class methods so they can not use the this reference as this reference is used to access variables and instance methods only. 
+
+You can run a class from a different file in another as Java will automatically search and compile the file with the right class. You do not need to compile both files.
