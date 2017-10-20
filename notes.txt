@@ -329,7 +329,13 @@ Passing Data
 
 Pass by value = a copy of the primitive argument is passed
      Object reference = value of memory address is passed.
-Java is always pass by value; Remember that when object references are passed to methods, it is a reference to the actual object that is passed.
+Java is always pass by value during method invocation; Remember that when object references are passed to methods, it is a reference to the actual object that is passed.
+
+METHOD INVOCATION AND ARRAY NOTICE
+It when calling a method with an array literal, the following is valid
+   function(new int[]{1,3,5}), if you try function({1,3,5}) THIS IS INVALID
+   this kind of array {1,3,5} is only valid at array initialization say 
+   int arr[] = {1,3,5}; but it is invalid for re-initialization or method calls.
 
 Method Overloading
 multiple methods have the same name but different parameter list.
@@ -433,3 +439,161 @@ we use this.name in the updateProfile() method because one of the method paramet
 Static methods are class methods so they can not use the this reference as this reference is used to access variables and instance methods only. 
 
 You can run a class from a different file in another as Java will automatically search and compile the file with the right class. You do not need to compile both files.
+
+Reassigning Object References
+By default Java passes by reference. See the ReassignObjectReferences.java file. Any object in memory left without reference will be freed up by Java's garbage collection
+
+Operator
+	A symbol which performs an operation on its operands and produces a result.
+Unary operator - operates on one operand eg -x, x++;
+Binary operator - operates on two operands. placed between operands (infix)
+Ternary operator uses two symbols a ? and a : eg (x > 3)? x : 0
+
+Arithmetic Operators
++ addition eg int i = 5 + 2; (+ can also be used to concatenate strings)
+- subtraction
+Note that both + and - can be used as unary operators eg -x or +x
+* multiplication
+/ division
+% modulus - returns the remainder
+++ increment - post-increment (x++) and pre-increment (--x);
+-- decrement - post-decrement (x--) or pre-decrement (--x);
+
+Arithmetic operators apply to all primitive types except boolean.
+Compound arithmetic assignment x = x + 5 => x += 5; others include -=, *=, /=, %=
+
+Arithmetic Operation Rules
+	   Operator precedence rules
+	   1. Multiplicative operators (*, /, %) have higher precedence over additive operators.
+	   2. Operators in the same level will be evaluated left to right
+	   3. Parentheses can be used to change the order of evaluation
+	   
+Operand Promotion
+	Operands smaller than int are promoted to int before addition is applied[byte, short or char]
+	eg 127(byte) + 1 (byte) -> 127 (int) + 1 (int) -> 128 (int)
+	'a' + 'b' = 195 why? char is treated as a 16 bit unsigned integer
+	'a''s decimal value is 97 and 'b' is 98 in UTF-16
+	4. Same type operations if both operands are int, long, float or double, then operations are carried in that type and evaluated to a value of that type thus 1 / 2 = 0 not 0.5
+	Mixed Type Operations
+	If both operands belong to different types, then the smaller type is promoted to larger type (note that long is converted to float even though long is 64 bit and float is 32 bit - float has a greater +).
+	Comparison Operators/Relational Operators
+	compare one operand with another and test some condition. Since we are testing a condition, the output will be a boolean value. Key for flow control statements
+	< lt	<= le  > gt  >= ge	 == eq   != neq
+Logical operators/conditional operators
+comparison operators alone can only test a single condition eg if(x > 7){..}
+How about testing multiple conditions? eg (x > 7) and (y < 2)?
+
+&& AND	  || OR	  ! NOT
+
+With these logical operators we can test one or more conditions. Logical operators just like relational operators will return boolean values.They can be used in control flow statements.	 
+
+&& and || are short circuit operators because they can quickly evaluate without checking both sides of the expression eg  left operand && right operand -> this will evaluate to false if left operand is false and will not wait to check right operand. It only checks right operand if left is true. 
+left operand || right operand also evaluates fast without checking if left operand is true.
+These two short circuit operators can improve run time performance.
+&& prevents NullPointerException by preventing us from accessing an object which is null eg if(s != null && s.getGender() == "male"){...} here the && prevents us from just trying to access the getGender method on a null pointer.
+Operator precedence
+	 ! then && then ||
+	 you can use parentheses to change evaluation order
+
+Bitwise Operators
+operate on bits. Operands can be integers or boolean
+	Applications - mostly in embedded systems with resource constrained environments where things must be manipulated very efficiently.
+	Hash tables eg Java HashMap's hash function
+	Compression and encryption
+Bitwise Operators
+	& returns 1 if both bit inputs are 1
+	| returns 1 if either of input bits is 1
+	^ returns 1 if only one of the input bits is 1
+	~ inverts bits of its operand
+	bitwise & and | are non-short circuit operators so they always check both operands unlike in && and ||
+	Compound bitwise assignment &=
+Bit Shift Operators
+    shift bits. Their operands must be integers.
+    << left shift
+    >>> unsigned right shift
+    >> signed right shift [preserves the sign of the original number]
+    Uses - faster than multiplication and division and compilers can use them. Used in games and embedded programming. Also systems without floating points.Can also be expressed with compound expressions >>=, >>>= <<=
+
+Control-flow
+If body of any of the control statements has more than one statement, use curly braces. Note that it is also good practice to include curly braces anyway
+if, for, while, do while, switch
+
+if(x > 7){...}
+else if{...}
+else {...}
+
+switch(x){
+	case a:
+	     do ...;
+	     break;
+	case b:
+	     do ...;
+	     break;
+	default:
+		do....;
+
+}					
+
+a switch expression's numerical final value SHOULD EVALUATE TO AN INTEGER. Thus items submitted to the switch expression should be converted to integers and then compared.No duplicate values should be placed in the switch expression. Note that the range of the case values should be in the data type range.
+Case label value must be a constant expression.Can be an integer or string literal. eg final int = 4;
+only constants can be used as cases
+                                 in a switch statement, hence the use of fin\
+al. This is because the switch statement is setup during compilation so it n\
+eeds the final values. A null case cannot be used as well
+switch statement cannot be used in the following conditions:
+       - there is more than one condition to test
+       - tests other than equality eg month >= 3;
+       - switch cannot be used for variables that are not integers, strings or enum
+       - if at least one of the case label restrictions does not apply.
+switch is preferred if:
+       - readability improves
+       - intent - the switch is clear with what variable is being evaluated
+       - switch is faster than if because case labels are known at compile time. Also, switch has less comparisons. In the worst case, an if statement will take O(n) time to evaluate whereas a switch statement is O(1)
+Ternary Operator
+Can be used as an alternative to an if else statement.
+Shorthand for if-else with single statements
+	  result = (boolean-expression)? value-if-true : value-if-false;
+**Note that parentheses are optional but they improve readability.
+When to use ternary operations - to improve code readability
+Ternary operator cannot be an expression statement. 
+ (x > 2)? 3: 4; is invalid. Ternary operator can only be used if we are assigning something. eg int y = (x > 2)? 3:4;
+
+for Statement
+To iterate over array elements.
+for(int i = 0; i < 10; i++){...}
+ Initialization part of for loop can be done on the outside. eg 
+   	   int i = 0;
+	   for(;i<10; i++){...}
+for-each Statement
+Iterate arrays & other data structures
+for(int i: array){
+	System.out.println(i);
+}
+Increments are taken care of internally. Reduces chances of errors in nested loops.
+Traditional for loop should be used when you need to transform one item in the index. Also useful when you want to traverse two arrays in parallel.
+eg for(int i = 0, j = 0; i < I_array.length && j < J_array.length; i++,j++){
+   System.out.println(I_array[i]+ " "+ J_array[j]);
+}
+Traditional for loops are also good for backward iteration. With for each you can only move forward.
+For each has much cleaner cde.
+While loop
+Run if you do not know the number of times the loop should run
+Do while
+Runs at least once. Note that the do{...}while(...); expression ends with a semicolon;
+Infinite loops
+	 while(true){
+		if(getTime() == 8){
+			     sendEmails();
+			     }
+			     }
+break statement
+Exits immediately enclosing swith or loop (for/while). A break statement needs to be in a switch or for/while loop otherwise it will be invalid
+Labeled break Statement
+How about if you want to exit one of the outer switch/loop. First we label the block statement label: block statement 
+A block statement contains 0 or more statements enclosed in curly braces eg any control statement with a brace. Once we have labeled a block , we can use the break label; command to break;
+continue statement
+	 continues with the next iteration of the innermost loop. skips the rest of the loop and goes to the next cycle.
+There is also a labeled continue statement. First we label the loop we want then we use continue label. the continue label cannot be used with an if statement though. break can be used with it though.
+Variable scope
+Every variable has a scope
+Entire class variables/globals
