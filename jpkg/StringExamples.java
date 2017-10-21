@@ -14,7 +14,7 @@ static void stringExamples(){
     System.out.println("\nComparison Methods");
     System.out.println("s.equals(\"HELLO WORLD!\"): "+ s.equals("HELLO WORLD!"));
     System.out.println("s.equalsIgnoreCase(\"HELLO WORLD!\"): "+ s.equalsIgnoreCase("HELLO WORLD!"));
-    System.out.println("s.compareTo(\"HELLO WORLD!\"): "+ s.compareTo("HELLO WORLD!"));
+    System.out.println("s.compareTo(\"HELLO WORLD!\"): "+ s.compareTo("HELLO WORLD!")); //lexigraphical comparison. Note that CAPs come before lowercase so the result is a positive integer if s comes after the argument.
 
     //Search methods
     System.out.println("\nSearch methods");
@@ -26,7 +26,7 @@ static void stringExamples(){
     System.out.println("s.indexOf(\"o\"): "+ s.indexOf('o'));
     System.out.println("s.lastIndexOf(\"o\"): "+ s.lastIndexOf('o'));
 		       
-    //Examiningi individual characters
+    //Examining individual characters
     System.out.println("\nExamining individual characters");
     System.out.println("s.charAt(4): "+ s.charAt(4));
     
@@ -44,15 +44,16 @@ static void stringExamples(){
     System.out.println("\nReplacing");
     System.out.println("s.replaceAll(\"o\", \"r\": " + s.replaceAll("o", "r"));
     // Static method (includes overloaded methods)
-    System.out.println("\nString.valueOf(1,3): "+ String.valueOf(1.3));
+    System.out.println("\nString.valueOf(1,3): "+ String.valueOf(1.3)); //returns the stringified version of input eg double 1.3 is returned as "1.3"
 
     //Split
     System.out.println("\nSplit");
-    System.out.println("\ns.split(\"o\"): ");
+    System.out.print("\ns.split(\"o\"): ");
     String sa[] = s.split("o");
     for(String temp: sa){
-	System.out.println(temp);
+	System.out.print(temp + " ");
     }
+    System.out.println();
 }
       
     public static void main(String...args){

@@ -777,3 +777,62 @@ Apache Commons Lang ~ StringUtils
 Guava's String Utility Classes
 
 Be aware that they exist and are commonly used; Research before building a new package
+TODO: LOOK AT STRING CLASS API
+
+String Pools
+String literals are stored in a special area of the heap memory (where all objects reside) called string pool
+Identical String literals share same storage. As long as the strings are created during  a single JVM process.
+Strings created via the new keyword are stored as regular objects also on the heap section of memory but not in the string pool. They get their own storage and identical strings do not share storage.
+When a String is created as a string literal say String s1 = "Hello"; a string object is created in the string pool and s1 stores the memory location of that object. If another string s2 is created with the same literal eg String s2 = "Hello"; then no new string object is created and s2 points to the same memory location of the previously created "Hello" object. Thus s1 == s2 is true.
+If another string reference is created but using the new keyword eg String s3 = new String("Hello"); the identical object is still passed to the constructor String() and so it doesn't create a new String object in the pool since "Hello" is already there. Instead, it creates a string object  outside of the string pool pointing to that string object in the string pool. Then the location of this secondary object is passed back to s3. If another string is created with the new keyword again, String s4 = new String("Hello") another separate object is created outside of the string pool, in heap memory. This object still references the "Hello" in the string pool. The location of this object is assigned to the new object reference s4. Thus s3 == s4 is false 
+
+In general, when a string is created with the new keyword, first if that string doesn't exist in the string pool, then a new string object is created in the string pool, containing the string literal passed into the String constructor. Then outside of the string pool, another string object is created and this one references the one inside of string pool. The memory address of this secondary object is passed back to the String reference object. Thus, two string objects are created on the heap memory in this case.
+
+So the string pool stores a single copy of each string literal as a string object. The string pool only stores string objects. There is only one copy of string pool on the heap. It is also called string table.
+The process of building the string pool is called interning. Each string object in the pool is called an intern
+When JVM received  a string literal for the first time, it creates a new String object with the given literal. Then it invokes the intern() method . The intern method checks if the string is already in the string pool. If it is there, it returns a reference of that existing object. JVM then abandons the newly created object. If string pool doesn't contain the string, then the string object is added to the string pool and returns its reference.
+If the same literal is encountered once again, then JVM checks if the intern method was previously called on such a literal and if so returns its reference. JVM always checks if invoke was previously called on a literal.
+
+When two literals are concatenated, their result is interned as the concatenation produces a literal whose value is known at compile time.
+so String s = "hel" + "lo"; ->this expression is interned
+   String s1 = "lo"
+   String s2 = "hel"+ s1; -> not interned. Here variable s2 is a concatenation between a literal and a variable s1. Here, variable s1 is evaluated at run time and so we do not have a literal for it on compile time so this would not result in the creation of an intern and the resulting object would be outside of the string pool. But we can explicitly invoke the intern method on s2 then an intern would be created. s2 = s2.intern(); explicit interning
+Explicit interning is not useful unless we are working with many strings eg Natural language processing.
+String Immutability
+Once a string is created, its value cannot be changed
+String s1 = new String("abcd");
+       s1 = new String("1234"); // above object "abcd" is abandoned. The references can be reused which is why we could assign s1 to something else
+       Why immutable strings? it would affect string interning as the same string object could alter a shared object leading to serious errors for the other references.
+       Also affects concurrency as multiple threads may be sharing the same string.
+       Also creates security vulnerabilities by allowing hackers to alter input strings and gaining access to other parts.
+       
+ String concatenation
++ operator All non-string operands will be converted to String if a string comes first 
+  eg String s = "hello"+ 1 + 3 -> "hello13"
+  but String s = 1 + 3 + "hello" -> "4hello"
+Evaulation always happens from left to right for the + operator. Precedence can be set using parentheses.
+StringBuilder & StringBuffer - from java.lang package. These two allow us to mutate their StringBuilder and StringBuffer objects
+StringBuilder sb = new StringBuilder();
+	      sb.append("hello");
+	      sb.append(" world!);
+	      String s = sb.append(" Good").append(" morning").toString();
+
+Other methods in StringBuilder: length, delete, insert, reverse, replace
+StringBuilder is not synchronized - if the same string builder object is shared between two processes, one process can modify a shared string.
+
+StringBuffer is now obsolete. It is slower than StringBuilder because StringBuffer is synchronized. Its API is compatible with StringBuilder.
+BEWARE OF THE PERFORMANCE OF STRING CONCATENATION
+The + operator is a convenient way to combine a few strings. It should not be used for many strings because it severely affects performance.
+This is because with each concatenation the following steps are taking place:
+     1. contents of both strings are copied
+     2. a new StringBuilder object is created and appended with both strings
+     3. the resulting StringBuilder object is then used to create a new String object via the toString() method. The StringBuilder object is discarded
+Thus concatenation is time consuming O(n^2), space consuming
+RECOMMENDATION: Use StringBuilder instead. O(N) and orders of magnitude faster than + operator. Also twice as fast as StringBuffer
+
+Escape Sequences
+A character preceded by \
+To use special characters and strings
+\", \', \n, \t, \\, \r (carriage return), \b (backspace), \f (formfeed)
+\u0041 UTF character code.
+Note that the escape sequence is not required to put the " or ' in a string.
