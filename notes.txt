@@ -836,3 +836,117 @@ To use special characters and strings
 \", \', \n, \t, \\, \r (carriage return), \b (backspace), \f (formfeed)
 \u0041 UTF character code.
 Note that the escape sequence is not required to put the " or ' in a string.
+
+Access Levels and Hiding of Information
+Access levels provide restrictions on accessing classes and their members.
+eg we may want a class to only be accessed by other classes in the same package. We may not want other external classes to create instances of that class.
+In most cases, you'd want the class to be accessible to all classes inside and outside of that package. 
+This is done by using the keyword public in the class declaration. public is an access modifier. eg public class Basics{...}. 
+If you don't use any default modifier, the package is only available in the package.
+
+Accessibility for Class Members
+Inside class - member only accessible within the class that it is defined. For this you use the private access modifier.
+Sometimes we want to make a member accessible to other members in the same package, for this we do not use any modifier at all. By default, the members are accessible to all classes in that package but not outside. This is called package-private.
+We may also want a class to be accessible to all package members as well as any subclass. Those subclasses may be outside the package too. for this access level, you would use the protected access modifier
+Finally we may want members to be accessible to any code regardless of where it is defined - inside or outside package. This is the public access level.
+private and public are the most used. protected is rarely used.
+
+Members of a class have additional access restrictions -> private and protected
+public and default classes apply to both.
+
+private Access Modifier
+private member variables can only be defined at class level. any private member variable created inside a method is already private to that method, so this results in a compile error
+ eg private int id; // visible only within the class.  
+void method(){	
+     private int b; //this causes an error since b is already private to method()
+}
+
+You can also make methods private eg private void method() - NOTE THAT THE ACCESS MODIFIER ALWAYS COMES FIRST OTHERWISE YOU WILL GET A COMPILE ERROR
+
+Private MEANS THAT IT IS PRIVATE TO THE CLASS AND NOT PRIVATE TO OBJECTS OF ITS CLASS
+eg class Student{
+   private int id;
+   String name;
+}
+
+Student s1 = new Student();
+s1.id = 1;
+Student s2 = new Student();
+Here since s1 and s2 are both of the Student class,  they can access each others'
+private member id. Any other class beside Student cannot access the id member eg Lecturer etc...
+By using access modifiers we can restrict the parts of the code that can be seen outside of the package.
+
+Information Hiding
+WE MUST TRY TO RUN GOOD PROGRAMS RATHER THAN FAST ONES. USE GOOD DESIGN PRINCIPLES FIRST
+Encapsulation
+A language facility that allows bundling of data and methods that manipulate that data. It is done using a class in Java eg 
+  public class Student{
+  	 //variables or data
+	 public int id;
+	 public String name;
+
+	 //method definitions
+	 public boolean updateProfile(String newName){
+	 	name = newName;
+		return true;
+	 }
+}
+
+Here, the Student class has allowed us to bundle our id and name data
+
+ENCAPSULATION ALONE DOES NOT LEAD TO GOOD DESIGN
+eg for the previous example, the variables are all available to the public. This can lead to tight coupling
+Tight coupling
+      can't enforce invariant (or range)
+      eg for a gender field, we cannot restrict the possibilities to "male", "female" and "transgender" since client code can directly access and change the gender field to any value they wish. 
+      can't change data representation eg if we want to change one of the variables to a different type, the client code may be affected. We cannot change it without possibly compromising the end user's program. If we have an API for a package, the end user expects that none of the available methods will change for a long time.
+      IN PUBLIC CLASSES, USE ACCESSOR METHODS, NOT PUBLIC FIELDS
+Accessor methods
+	 public class Student {
+	 	private String gender;
+		public void setGender(String gender){
+		       this.gender = gender;
+		       }
+		public String getGender(){
+		       return gender;
+		       }
+}
+
+1. access modifier for the gender field is set as private
+2. we define a public getter (accessor) method eg public String getGender();
+3. we define a public setter (mutator) method eg public void setGender();
+
+IDEs try to automatically have you declare getter and setter methods once you declare a private variable in a class.
+
+How do accessor methods help us avoid the problems that come from tight coupling? - now we can enforce invariants by checking the submitted input. if it falls outside of our range, we can reject it and throw exceptions to the client that the argument is illegal. See below:
+     public class Student {
+      	    private String gender;
+	    public void setGender(String gender){
+	    	   if(gender.equals("male") || gender.equals("female") || gender.equals("transgender"){
+		   this.gender = gender;	
+		   }
+		   else{
+		   throw new IllegalArgumentException("Wrong gender passed!!");
+		   }
+		    }	
+	public String getGender(){
+	       return gender;   						
+	       }
+} 
+
+We can also change our own internal representations and leave our implementations without affecting the clients. The code is now loosely coupled. API is the same and there is no access to the backend of the API.
+
+Loosely Coupled Systems 
+	allow us to develop, test, use and optimize in isolation
+	useful code in multiple projects and decreases risk of building large projects.
+
+MINIMIZE THE ACCESSIBILITY OF CLASSES AND MEMBERS
+General suggestion is:
+1. carefully design a minimal public API of your class. 
+2. See which of the members will really be needed by client and make them public 
+3. Make all the others private
+4. Make a member default only if really needed
+[frequent changes mean you need to reexamine your design!]
+
+Accessibility for classes/interfaces
+If possible let it be default. If only one other class uses it, consider making it a private nested class
