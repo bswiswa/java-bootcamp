@@ -950,3 +950,401 @@ General suggestion is:
 
 Accessibility for classes/interfaces
 If possible let it be default. If only one other class uses it, consider making it a private nested class
+
+static, final and Coding Conventions
+Writing code in a professional way.
+Static methods
+Methods can be of two types - instance or static methods. Java is an OOP language so most of the methods we invoke deal with state - instance methods. But sometimes we define utility methods which do not depend on state and such methods are defined as static.
+So a class can have only instance methods, or only static methods or both of them.
+Static methods have the keyword static in the declaration.
+main method is static. All static methods can call on each other as there is no need to have an instance of a class object. Thus main can freely call other static methods in the class to evaluate during its run.
+Static methods are class-level methods, they have no access to state ie, they cannot access instance variables/methods. Trying to do so results in a compiler error. However, they can access static variables - these are class-level variables. A static variable declared in a class is shared across all objects in that class. Since static methods do not have anything to do with state, they can directly access other static methods in the class.
+Static methods are invoked using the dot method on the class eg className.methodName(), Math.min()
+Static methods save heap space as you do not have to create an object. Note that it is legal to invoke a static method on an object reference variable but it leads to misleading code as reference variables are related to objects. eg instead of Math.min() [using the className.method()] we use an object of the math class eg num1.min() [implicitly, the compiler uses the className in that situation.
+ENFORCE NONINSTANTIABILIBY WITH A PRIVATE CONSTRUCTOR
+If all of the methods in your class will be static, you can make your class non-instantiable by marking its constructor as private - no other code can create an object of your class. eg the Math class in java.lang.Math is created this way so you cannot create an object of the Math class. Math is a class of utility functions - ie static functions.
+Math class java.lang.Math
+only static method, private constructor (non-instantiable)
+commonly used is the random method - Math.random()
+returns a double between 0.0 & 1.0 exclusive (never returns 1.0)
+so to generate a random integer between 0 and 10 then we do
+int rand_num = (int)Math.random()*10 
+
+Math.abs()
+returns absolute value
+
+Math.round()
+rounds argument to the nearest long or int based on the data type of the argument eg Math.round(23.4) -> 23L, 
+However if argument is FLOAT, IT IS ROUNDED TO NEAREST INT. This is because the two types that Math.round returns are long and int. Long is 64 bits whilst int is 32 bits. double is 32 bits so a double number like 23.4 is returned as a long number 23L. A float is 32 bits, same as integer so it is returned as an integer.
+
+Math.ceil()
+returns the smallest whole number double that is greater or equal to the argument eg Math.ceil(4.3) returns 4L Math.cel(10.0) -> 10
+
+Math.floor()
+Returns the largest whole number double less than or equal to an integer. Math.floor(24.8) returns 24.0
+
+Math.min() & Math.max()
+both take 2 arguments and return minimum or max of the two.
+
+Math.sqrt()
+returns the positive square root of a double. Returns NaN if argument is NaN or negative. NaN - not a number (undefined) eg 0.0/0.0 or Math.sqrt(negative number)
+
+Static Variables
+declared with keyword static. Independent of any instance of the class.
+Declared directly within class. Will result in compilation errors if declared within a method. 
+They are assigned a default value if they are not explicitly initialized.
+Accessibility: if declared with a public access modifier, then any code outside of the class can access it via the class name ie ClassName.variable
+Any code inside of the class can access it directly be it static or instance methods. If it has default access (ie not public static but just static), then only classes in that package can access that variable
+Static variables are also referred to as Class variables because there is only one copy per class and it is shared across all objects of the class so if one object updates the value of the variable, then all objects will see it. As opposed to instance variables which vary from object to object.
+Accessible to static methods in the class, and also to instance methods and constructors of a class.
+
+class StaticExample{
+      int instanceVar;
+      static int staticVar;
+
+      void instanceMethod(){ // can access static and instance members
+      	   instanceVar++;
+	   staticVar++;
+	   staticMethod();
+}
+
+	static void staticMethod(){ // can access only static members
+	       staticVar++;
+	       instanceVar++; // compile error
+	       instanceMethod(); // compile error
+	       (new StaticExample()).instanceMethod(); // has an instance of class so ok
+}
+}
+
+Initializers: Static & Instance
+the initializer blocks can be useful for initializing static and instance variables
+Static initializer
+Can be useful initializing static fields where you need multiple lines to initialize them. eg populating a data structure, initialization with error handling
+examples:
+	static HashMap map = new HashMap();
+	static{
+		map.put("John", "203-405-9087");
+		map.put("Anita", "222-333-4444");
+}
+There is no way we could have initialized our static HashMap with these 3 lines and not encounter a compile error.  so the static {...} block helps us to do this
+
+example 2:
+	static Stuff stuff;
+	static {
+	       try{
+		stuff = getStuff();
+		} catch(Exception e){ ... }
+}
+
+In the above case the static {...} block allows us to call on a function to get data and even handle exceptions of that function call before we initialize our static variable.
+
+example 3:
+	static Stuff stuff = initializeStuff();
+	private static Stuff initializeStuff(){
+		try{
+			return getStuff();
+		} catch(Exception e){ ... }
+		return null;
+		}
+
+Here we have created a method that we can use to reinitialize the static variable if need be [note - if we are outside of the class we cannot call it directly since in this case it is private]
+We can have multiple initializers and they will be excecuted in the order that they appear in our code.
+Static initializers cannot reference instance members ie the instance variables or methods
+
+Instance initializer
+initializes instance variables the syntax is { ... } so it is the same as the static initializer but has no static keyword.
+But constructors initialize state so why do we need instance initializers?
+    it is useful when sharing a block of code between multiple constructors
+    under the hood, the Java compiler will copy every initializer block into the beginning of every constructor
+There can be multiple initializers and they will be executed in the order that they appear	
+They can also reference static members
+
+So in summary, static initializer blocks help when initialization cannot be done in one line. syntax is static{...}
+Instance initializer blocks {...} help when we need duplicate code to be in all the constructors. During compilation, the initializer code will be copied to the top of all constructors. It helps them share code.
+
+final Variables
+VALUES MAY OR MAY NOT BE EVALUATED AT COMPILE TIME
+sometimes we want the value to remain constant
+eg public static final double PI = 3.14159265358979323846;
+final keyword implies constant
+If it is used with a primitive variable - value is constant
+If it is used with a reference variable, then the reference is constant, not the object content itself - this applies to objects eg arrays...thus the array content can be changed, but we cannot assign a new array to the variable as the new array would have a different memory address
+(what about strings? the object is immutable and so if the reference is immutable as well, then it must be constant)
+final variables do not get a default value because if it can be initialized once again later, then that goes against the whole principle of final - which is that we want the variable's value to remain fixed forever.
+final keyword can be used with instance, local or static variables
+
+final Instance Variable
+- constant for the life of the object
+- must be initialized in declaration, constructor or instance initializer
+- cannot be initialized through a method because if that method is never called, it would never be initialized. In such a case we would run into problems if we need to use that variable at a later point but it was never initialized - so you get a compile error for this.
+If declaration lacks an initializer and is initialized later in a constructor or an instance initializer block, then the final variable is referred to as blank final
+final local variable is straightforward - once initialized, it cannot be changed (and it has to be initialized at declaration)
+final static Variable
+These are class variables once initialized it is constant regardless of the number of instances are created. Must be initialized during declaration or during the static initializer block.
+Naming convention of static variables -> should be all CAPS_WITH_UNDERSCORE_SEPARATING_WORDS eg private static final int COPY_THRESHOLD = 10;
+Constant Variables
+Constant variables are a special type of final variable whose VALUE IS KNOWN AT COMPILE TIME
+For this reason they are usually referred to as compile time constants
+ eg public static final double PI = 3.14159265358979323846;
+The benefit of knowing the value at compile time is the compiler can already pre-fill every instance of that variable with the actual value and this eliminates some run time overhead. eg
+    int x = Math.PI here PI is a constant (shown above) and at compile time, the compiler can already substitute x with the value of PI so that at run time,  there is not need to check for the value of by going to the Math class first.
+Constant variables are final variables with the following restrictions:
+	 - needs to be declared with keyword final
+	 - data type needs to be primitive data type or String (string obj is immutable so both reference and object cannot be changed as in the case of arrays and other objects)
+	 - initialized in the declaration statement itself, not in constructor or initializer or static block
+	 - initialized with a compile-time constant expression - value is known at compile time itself. eg primitive literals or string literals
+	   final int x = 23; 
+	   final int x = 23 + 5;
+	   final String x ="helo" + "world!";
+	   final int z = 5;
+	   final int y = 23 + z; //if z is a constant itself then it will be constant
+	   if z was just int z then y above would not be a constant;
+	   final int w = getValue(); not a constant because the value is evaluated at run time. It may be a final variable but not a strict constant
+	   public class Test {
+	   	  final int x;
+		  public Test(){
+		  	 x = 23;
+			 }
+		}
+In the class Test above, x would not be a constant because the declaration is not taking place at the declaration itself. It is happening in the constructor.
+public class Test {
+                final static int x;
+                 static{
+                      x = 23;
+                         }
+		}
+
+Similarly, x is not constant in the above example because it is not being initialized during its static declaration but it is being initialized in the static block. so its value is not known at compile time.
+SUGGESTION: use final with local variables only if it is some special constant and it would be worthwhile to highlight it that way
+
+Boxed primitives
+Primitives in Java are:
+byte
+short
+int
+long
+float
+double
+boolean
+char
+
+Each of them has an associated class called a box primitive
+The box primitives for the above are as follows:
+Byte
+Short
+Integer
+Long
+Float
+Double
+Boolean
+Character
+
+These boxed primitives are part of the java.lang package. They are all simply classes. They are called Boxed primitives because they enclose a value
+eg Integer data = new Integer(25); or Integer data = new Integer("25"); A boxed primitive is a wrapper class that wraps the primitive.
+Uses of Boxed Primitives
+useful in converting Strings to primitives eg int i = Integer.parseInt("25");
+They also provide useful public static fields eg MAX_VALUE, MIN_VALUE -> this returns the corresponding maximum value for that primitive
+Provide utility methods:
+	Character: isLetter, isDigit, isLetterOrDigit, isLowerCase, isUpperCase, isWhitespace
+	Integer.toBinaryString(int)
+	Double.isNaN(double), Float.isNaN(float)
+So in summary boxed primitive provide some fundamental methods for each primitive type
+Also useful in populating data structures eg ArrayList, HashMaps. This is because we cannot add primitives directly to such structures.
+     eg ArrayList = new ArrayList();
+     list.add(25); // illegal before Java 5
+     list.add(new Integer(25));
+     It used to be illegal because a data structure like ArrayList is used to store only object references. So you had to wrap the primitive in a boxed primitive to store it in the ArrayList. In Java 5 onwards we can add primitives to ArrayList because of a feature called autoboxing. With this feature, the boxed primitive is what gets added
+Boxed Primitives are also used in Generics when defining Parameterized types eg ArrayList<Integer>
+Common Methods for Boxed Primitives
+Unwrap:	       int i = (new Integer(25)).intValue(); //other boxed primitives have values like booleanValue() or charValue();
+Parsing Strings:   Input is a string and you need to convert it into either a primitive or a boxed primitive. eg if you had to read the order Id of a sales document perhaps you could parse the XML first with a library eg  <orderId>25</orderId>. The extracted value is a string and we want to either an int or an Integer
+		   To primitive: int i = Integer.parseInt("25");
+		   To boxed: Integer i = Integer.valueOf("25");
+the static valueOf() is a standard naming convention for methods that create objects. they are also referred to as simple factories.
+To String:   String s = Integer.toString(25); primitive int to String
+Wrap: Integer.valueOf(int)  has much better performance than new Integer(25). The reason for better performance is due to the internal caching that the Integer class does. The values in the range -128 to 127 are always cached that is, Integer instances with these values are stored in memory so if you try to create an integer instance in this range using the valueOf() method, then the method would return an instance from the cache ie not creating a new instance. This is similar to String pool where string literals were being cached.
+
+Autoboxing
+Prior to Java 5 one had to manually create a box primitive by invoking either its constructor or using its valueOf() static method. In Java 5, a compiler feature called autoboxing was introduced. So the compiler can automatically create a Boxed primitive from a primitive. This means we can directly assign a primitive with a boxed primitive, that is we can assign a literal, directly to an object reference
+      eg Integer boxed = 10;
+      The compiler does autoboxing in the background -
+      Integer boxed = new Integer(25)
+There is also auto unboxing:
+      eg int j = boxed; which allows a boxed primitive to be assigned to a primitive variable. Here, the compiler is running int j = boxed.intValue()
+Method Invocatons
+     ArrayList list = new ArrayList();
+     list.add(25);
+We cannot add a primitive value directly to a data structure like ArrayList but autoboxing facilitates this. Before Java 5, instead of list.add(25), you had to do list.add(new Integer(25));
+Autoboxing has made the code less verbose and looks a lot cleaner
+Autoboxing allows us to do:
+	   void go(Integer boxed){}
+	   go(25);
+	   Here, autoboxing converts the primitive int to an Integer;
+Auto-unboxing allows us to do:
+	      void go(int i){}
+	      go(new Integer(25));
+	      above, the Integer object created is unwrapped back to an int integer
+Operations on Boxed Primitives
+You can perform arithmetic operations directly on boxed primitives eg
+    Integer boxed = new Integer(25);
+    boxed++;
+    int i = 3*boxed;
+Note that autoboxing does not work with arrays
+     eg Integer items[] = new int[]{1,2} //compile error
+Most likely due to it being an expensive conversion to convert every array element into a boxed primitive
+PREFER PRIMITIVE TYPES TO BOXED PRIMITIVES
+Time & space efficient - primitive types are faster and do not take up much space.
+eg void veryExpensive(){
+   Long sum = 0L;
+   for(long i = 0; i < Integer.MAX_VALUE; i++){
+   	    sum = sum + i;
+   }
+}
+In the above code, we cannot store the final sum in an integer value because it would be too big and so we use a long type to store it. This program will work correctly but is much slower than it should be because of the usage of the Long wrapper class instead of primitive long. 
+In the code above in sum = sum + i, the + operator has two operands of different types, the boxed primitive Long sum and the primitive long i. Recall that arithmetic operation rule included the operand promotion rule eg if you add a double to an int, the int is promoted to double.
+In sum + i, one operand is an object and the other is a primitive. In this case auto-unboxing occurs on sum from Long to long. Then long sum is added to long i. After the addition, the total is assigned back into sum, which is a Long boxed primitive and so the total is autoboxed again and assigned to sum. So roughly 2^31 Long object instances are being created which is a very expensive procedure.
+Always use primitives when you are doing intensive operations.
+
+Primitives are simple and have only their values. Boxed primitives are regular classes and have separate identities, that is each box primitive is an object which has a memory address and that memory address is its identity. So two box primitives can have the same value but two different identities.
+Thus for Integer a = new Integer(2); Integer b = new Integer(2); a == b is false
+A special exception is when boxed Integers are declared using autoboxing and the values of the integers are in the range of -128 to 127.In this range, the reference to the object is collected from the Integer cache of objects (similar to the String pool).\n Thus the two objects would be equal since they point to the same memory address");
+eg Integer a = 2; Integer b = 2; [direct assignment of primitive to object uses autoboxing in the background] a == b is true; but Integer a = -129; Integer b = -129; a == b is false
+HOWEVER for comparisons, <, <=, >, >= the Boxed primitives are always auto unboxed before comparisons so you won't have that issue. In fact only boxed primitives are allowed with this kind of comparison because of the auto unboxing.
+Luckily, you can always use the static intValue() method for example to make sure that you are always getting the value.
+Mixed-type computations lead to confusing results.
+eg Integer i;
+   if(i == 0){
+   	System.out.println("i is zero!");
+	}
+for the above code, you would get a NullPointerException error. This is because, in the comparison, the compiler will look for i and try to unbox it to get its int value but because i is a null pointer not pointing to anything, it would throw the NullPointerException
+
+Coding Conventions
+Naming
+ADHERE TO GENERALLY ACCEPTED NAMING CONVENTIONS
+Typographical conventions - more about appearance eg upper or lower case 
+Grammatical conventions - more of part of speech eg nouns, verbs, adjectives
+packages
+	lowercase alphabetic characters, rarely digits
+	should be short with 8 or few characters & single words
+	should have meaningful abbreviations eg util for utilities
+	acronyms are fine eg awt for Abstract Window Toolkit
+	never start with java or javax which are used by standard Java API
+	use organization's reverse internet domain name 
+Classes
+	 Capitalize first letter of each word
+Methods and Variables
+	Use camelCase eg getArea, studentCount
+	static final Variables should be in ALL_CAPS_WITH_UNDERSCORES
+	eg static final int COPY_THRESHOLD = 10; Note that this does not
+	apply to final instance or final local variables. Rule only applies
+	if variable is primitive.
+Abbreviations
+	avoid them for Classes, methods and fields
+	acronyms are fine
+	for local variables, abbreviations and acronyms are fine
+	meaningful individual characters are fine eg x, y, z
+Grammatical
+	Classes
+		use singular noun or noun phrase eg User
+		keep names simple and descriptive
+	Methods
+		named based on what their action is
+		use verb or verb phrase eg append, calculateDistance
+		use descriptive names
+		don't hesitate to use longer names
+		methods that return a boolean value start with is eg is Digit
+		isEmpty(), isActive(), setActive()
+		sometimes has is used eg hasLicence()
+		Non-boolean methods - use attribute name. Use get and set in
+		pairs
+		Special methods 
+		- Object type conversions - use to eg toString, toArray
+		- static factory - eg valueOf, of, newInstance, newType
+	Fields
+		boolean usually adjectives eg active rather than isActive
+		non-boolean - nouns and noun phrases
+		singular and plural nouns
+		name objects of same class by purpose eg 
+		void sendMessage(User sender, User receiver)
+Structuring Programs
+Class organization:
+      1. variables - static followed by instance
+      2. static initializers
+      3. static nested classes
+      4. static methods
+      5. instance initializers
+      6. constructors
+      7. instance nested classes
+      8. methods
+Class size
+      The Single Responsibility Principle
+      a class should not have more than one responsibility
+      helps create better abstractions and loosely coupled classes
+      helps having fewer lines of code too
+      should be less than 2000 lines
+Method size
+       small and focused
+       should do only one thing
+       recommended reading - Clean Code: A Handbook of Agile Software 
+       Craftsmanship by Robert C. Martin
+       recommends that methods should hardly ever be more than 20 lines of
+       code
+       refactor long methods - this promotes software reuse and clean,
+       readable code
+       group methods with similar functionality
+Local Variables
+      MINIMIZE THE SCOPE OF LOCAL VARIABLES
+      declare a local variable where it is first used
+      for loop minimizes the scope of variables so it is preferred over
+      while loops
+Stylistic conventions
+	  beginning brace - end of line
+	  end of brace, start of statement
+	  indent blocks by 4 spaces (1 tab)
+	  wrapping lines - limit line length to 80 characters
+	  	   break after comma eg method calls & declarations
+		   break before operator eg if blocks, arithmetic ops
+	use 8 space rule(or 2-tab)
+	When using Eclipse, you can can use the CTRL-Shift-F or 
+	Command-Shift-F on Mac to format your code
+
+Comments
+	provide code overview
+	specify non-obvious design decisions
+	frequent comments -> poor code quality
+	use descriptive method and variable names
+	eg int search(int list[], int key){
+	       		  sort(list);
+			  binarySearch(list, key);
+		}
+	if developing an API, then you need to provide an overview of methods
+	implementation comments and documentation comments
+	implementation comments use // or /* */
+	/* */ can also be used to disable part of code
+	Documentation comments are called javadoc comments
+	They start with /** eg /**API details...*/
+	If source code includes javadoc comments then a javadoc parser 
+	can extract the comments and generate HTML from it
+Implementation Comments
+	       Used inside methods or with private fields
+	       3 types - block, single-line, trailing comments
+	       block comments
+	       	     describe block of code
+		     1 or more lines
+		     preceded by a blank line
+	single line comments
+	       short comments
+	       preceded by blank line
+
+trailing comments
+	 very short
+	 appear on same line as code
+Documentation Comments
+	      should provide an overview of classes, methods and constructors
+	      general overview should be provided as javadoc comments and
+	      implementation as block comments
+Using the javadoc tool
+start with /**
+put a brief overview of class inside. 
+Select the files or project you want to generate Javadocs for. Click
+Project and Generate javadoc  
