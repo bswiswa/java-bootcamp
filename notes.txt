@@ -98,7 +98,7 @@ Classes & Objects
 OOP roots back to 1960s. Conceived to implement large projects and implement
 real world scenarios in a natural way
 
-Classes are blueprints and objects are instances of objects
+Classes are blueprints and objects are instances of classes
 Class members - variables, methods, member classes, member interfaces
 
 class Student{
@@ -113,7 +113,7 @@ the dot operator is used to access the object's state and methods
 Java Basics
      comments //ignore rest of line /*ignore block*/
      case-sensitive Test != test
-     classes, methods and varialbles must start with letter, underscore or $
+     classes, methods and variables must start with letter, underscore or $
      some reserved keywords like class, interface, enum...
      Printing to console
      	      System.out.println(string) - print and go to new line
@@ -129,7 +129,7 @@ Variables
 	Variable declaration <type> <name> = [literal or expression]
 	Variable is something whose value can be changed
 Variable Kinds
-	 instance variables or attributes - declared directly in the body of the clas. If not initialized they always have a default value. They represent state specific to each object of a class. Cannot be reinitialized directly within a class. Reinitialization is done within object methods only
+	 instance variables or attributes - declared directly in the body of the class. If not initialized they always have a default value. They represent state specific to each object of a class. Cannot be reinitialized directly within a class. Reinitialization is done within object methods only
 	 static variables - declared in class with keyword static. Is shared by all objects in that class. Only one copy is maintained per class regardless of the number of objects of class. Also get default value and cannot be reinitialized directly within the class.
 	 local variables - declared in methods. Includes method parameters. Not accessible outside of the method. They only exist on the stack when the method is mounted and they are cleared off after its execution. No need for default value.
 
@@ -144,13 +144,13 @@ Variable types
 		bit 1 for negative and 0 for positive. There are however
 		two problems associated with this representation
 		1. There are two representations of zero eg for 8 bits -
-		1000 0000 and 0000 0000 are -0 and +0
+		1000 0000 and 0000 0000 [ -0 and +0 ]
 		2. Binary addition of positive and negative numbers doesn't
 		work - eg add 16 [ 0001 0000 ] to -24 [ 1001 1000 ] =
 		1010 1000 or -40
 		In order to make binary addition work, we need a way to find
 		a number which when added to another binary number results
-		in 0000 0000 (in a 8 bits for example). In other words for
+		in 0000 0000 (in 8 bits for example). In other words for
 		every bit pattern of N bits there is a corresponding bit
 		pattern of N bits which produces an N-bit zero when the two
 		patterns are used as operands for the binary addition
@@ -167,10 +167,10 @@ Variable types
 
 		integers represent whole or fixed-point numbers
 		types: byte(8 bit)[-128 to +127], short(16 bit)[-32768 to 32767 (~32 000)], int(32 bit) [-2147483648 to 2147483647 (~2 billion)], long(64bit)
-		default of all ints is 0 for class-level variables, however within methods, they need to be initialized before use
-		long = 10000000L // L required if above the int range
+		default of all ints is 0 for class-level variables, however within methods, they have no defaults and so they need to be initialized before use
+		long = 10000000000L // L required if above the int range
 		int also stores hexadecimal numbers or Java 7 binary or octals. Underscores can be used in between digits to improve readability eg int x = 1_243_300;
-Floatng-Point Numbers
+Floating-Point Numbers
 real numbers with 32 bit float or 64-bit double
    double is more precise
    Data representation ~ 32 and 64 bit IEEE 754 flaating point convention
@@ -179,13 +179,15 @@ real numbers with 32 bit float or 64-bit double
    float f = 123.4f //TRAILING F is required (upper or lower case)
    double d = 123.4 //TRAILING D is optional
 
-   General rule - avoid float and double if exact answers are required. Unsuitable for money calculations. Recommended to use BigDecimal which comes in Java library. You can use int or long but you have to keep track of decimal point yourself.
-Floating point arithmetic is not as fast as integer. In general stick with int and double. double's greater precision is useful. Use float if memery saving is important.
+   General rule - avoid float and double if exact answers are required. Unsuitable for money calculations.
+Recommended to use BigDecimal which comes in Java library. You can use int or long but you have to keep track of decimal point yourself.
+Floating point arithmetic is not as fast as integer. In general stick with int and double.
+double's greater precision is useful. Use float if memory saving is important.
 
 Characters
 represented by 16 bit unsigned integers internally
 range is 0 to 2^16 -1 (since we are not dealing with negative numbers)
-default value is '\u0000' a unicode hexadecimal escape sequence
+default value when defined directly in class is '\0' or '\u0000' (if defined in method, it has no default and is uninitialized). '\u0000' is a unicode hexadecimal escape sequence
 Java uses 16 bit unicode scheme (UTF-16) which means that they are first encoded in UTF-16 format (a hexadecimal number) then stored as a 16 bit unsigned int.UTF is one of the implementations of the unicode standards.
 eg 'A' is encoded to hexadecimal 0041 which is then stored as a 16 bit unsigned int 00000000 01000001
    char c = 'A'; // always in single quotes
@@ -210,7 +212,7 @@ Explicit typecasting
 	 int x = (int)y;
 	 without the above cast we would get a compiler error due to the different type.
 
-* althogh implicit casting is taken care of by the compiler, you can still explicitly cast.
+* although implicit casting is taken care of by the compiler, you can still explicitly cast.
 Out of range assignments result in information loss
     eg byte narrowByte = (byte)123456; // narrowByte = 64 (only lowest rightmost 8 bits are saved)
 Truncation
@@ -221,7 +223,7 @@ Floating-point to int/char will always truncate the number
 
 Information Loss Implicit Casting
 Assigning int to float or long to float can result in loss of precision. Assigning long to double results in loss as well.
-int and long to float can lose some of the least significant bits during assignement. The same can happen for long to double [both have 64 bits]. int to double is fine though.
+int and long to float can lose some of the least significant bits during assignment. The same can happen for long to double [both have 64 bits]. int to double is fine though.
 
 You may have to explicitly cast when there is an issue with range of values.
 
@@ -231,11 +233,11 @@ Object references
        Student s means allocate memory for a Student reference variable
        new Student() means allocate memory for a student object
        Objects are created and stored on the Heap.
-       Default reference of an object reference is null, untill it is explicitly initialized. If you try to reference a member of a null pointer, you will get a NullPointerException.
+       Default reference of an object reference is null, until it is explicitly initialized. If you try to reference a member of a null pointer, you will get a NullPointerException.
 
 Statements
 They are what constitutes a program.
-Every statement ends with a semi colon and is a command to be excecuted.
+Every statement ends with a semi colon and is a command to be executed.
 A statement changes program state.
 3 kinds of statements
   declarations eg int count = 25;
@@ -247,26 +249,32 @@ A statement changes program state.
 Arrays
 An array is a data structure. A data structure is an organized collection of related data. An array is a container object that holds a fixed number of values of single type. Since an array is an object it is stored on the heap. The variable referencing it is an object reference.
 Creating an array
-	 int[] myArray = new int[7] // each element by default is zero (default int value)
-	 int[] = new int[]{9,11,2,3}; // no need to specify array size here
-	 int[] myArray = {9,11,2,5};
-	 int myArray[]; is also ok so it is up to you.
-	 so public static void main(String args[]) is oK!
-	 array length = array.length
+	 int myArray[] = new int[7] // each element by default is zero (default int value)
+	 int myArray[] = new int[]{9,11,2,3}; // no need to specify array size here
+	 int myArray[] = {9,11,2,5};
+	 int[] myArray = new int[7]; is also ok so it is up to you.
+	 array length = array.length [note that it is not array.length()]
+	 NOTE: an array is an object and so it is only created using the new keyword. Simply declaring int b[10]; or Student students[10]; IS NOT ALLOWED
 Array of Object references
       Student students[] = new Student[2];
+      Note that the above only creates an array of object references that are pointing to null. If you try to access members from them
+      you will get a NullPointerException. In order to use the array, you have to do a for loop and instantiate objects by calling the
+      constructor method [new Constructor()] for each of the references to point to.
+      So all in all to create an array of object references with actual objects being pointed to:
+      1. declare the array with its size: Student students[] = new Student[2];
+      2. loop through and instantiate objects for the references: for(int i = 0; i < students.length; i++){ students[i] = new Student(); }
 Random access
        Linear layout, contiguously -> fast random access. Accessing is O(1) - constant time
        Searching an array is O(n) however, linear time. This can be modified with data structures.
 Remember that an array is an object that stores a fixed number of elements. All these elements should be of a single type.
 
 2D Arrays
-   Creation: int myArray[][] = new int[4][2]; no. of rows first, columns next [x][y];
+   Creation: int myArray[][] = new int[4][2]; no. of rows first, columns next [x][y]; THE LENGTH OF A 2D ARRAY IS THE NUMBER OF ROWS IT HAS
 Internally JVM creates a one dimensional array and each element refers to each of the 4 rows. Each element is actually an object reference referring to another int array with 2 elements. So a 2D array is actually implemented as a 1D array with object references. These references point to arrays themselves
 	   Look at array declaration
 	   	type myArray[] -> array of type
 		type myArray[][] -> array of int array
-
+If you want to declare and populate the 2D array:
 int myArray[][] = new int[][]{ {9,11}, {2,5}, {3,4} }; OR
 int myArray[][] = { {9,11}, {2,5}, {3,4} };
 
@@ -314,9 +322,8 @@ Method types
 	       have keyword static in declaration otherwise they are instance methods
 	       are class-level methods - no access to state ie cannot access
 	       instance variables/methods
-	       can access static variables
+	       can only access static variables and other static methods
 	       invocation: className.methodName()
-	       can access other static methods
 
 Passing Data
 	When primitives are passed to a function, their updates within the function do not affect the state of the variable in the calling environment. However, if an object reference is passed to a method, the object is also updated in the calling environment.
@@ -327,33 +334,37 @@ Passing Data
 
 	For object references, <object reference, memory address of actual object>
 
-Pass by value = a copy of the primitive argument is passed
-     Object reference = value of memory address is passed.
+Pass by value = a copy of the value of the primitive argument is passed
+     Object reference = value of an object reference is the memory address of the object, so a copy of the value of the memory address is passed to functions.
 Java is always pass by value during method invocation; Remember that when object references are passed to methods, it is a reference to the actual object that is passed.
 
 METHOD INVOCATION AND ARRAY NOTICE
-It when calling a method with an array literal, the following is valid
+When calling a method with an array literal, the following is valid
    function(new int[]{1,3,5}), if you try function({1,3,5}) THIS IS INVALID
    this kind of array {1,3,5} is only valid at array initialization say
    int arr[] = {1,3,5}; but it is invalid for re-initialization or method calls.
 
 Method Overloading
 multiple methods have the same name but different parameter list.
-to overload a method YOU MUST change either the parameters or parameter types or both. Changing the RETURN TYPE DOESN't MATTER
+to overload a method YOU MUST change either the parameters or parameter types or both. Changing the RETURN TYPE DOESN'T MATTER
 Applies to instance and static methods.
 	eg boolean updateProfile(int newID){...}
-	   boolean updateProfile)int newID, char gender){...}
+	   boolean updateProfile(int newID, char gender){...}
 If two functions have compatible data types, the function that gets called is the one that is closest to the data type submitted
-   eg void overload(int i) {...} and void overload(short i){...} if someone calls byte b = 23; overload(23), then overload(short) is called since it has the next larger data types.
+   eg void overload(int i) {...} and void overload(short i){...} if someone calls byte b = 23; overload(b), then overload(short) is called since it has the next largest data type
+   to the byte input.
 You would have a compilation error if
     you try to overload a funtion by just changing the return type eg
     void updateProfile(int newId){...} and boolean updateProfile(int newId){...}
     you will also get an error if you just make the same signature with static.
 In all these you will get a duplicate method error.
+You get errors if you just change the return type or other modifiers that are not in the method signature because when calling a method, we do not specify its return type or
+its access modifiers thus when you call updateProfile(4), the program does not know which one you want to run it with since you cannot call it whilst specifying return type
+like void updateProfile(4);
 
 varargs
 from Java 5 onwards methods can have variable number of arguments.These special types of parameters are called varargs and even though it is a single parameter it can take 0, 1 or many arguments. It is always the last parameter specified (or the only one if the method has no other arguments)
-    Syntax: three dots following parameter (called ellipsis) type eg
+    Syntax: three dots following parameter type (called ellipsis) type eg
     	    foo(boolean flag, int... items)
 Invocation: array of any size eg (from above) foo(true, new int[]{1,2,3});
 	    commma-separated arguments eg foo(true, 1,2,3); here 1,2,3 are the varargs. Here those last three numbers are automatically converted to an array. Within the method the vargarg is treated like a normal array.
@@ -373,7 +384,7 @@ Why varargs in the first place? Why not just an array?
     public static void main(String...args){...}
 
     varargs & Overloaded methods
-    a vararg is made into an array and so the following are duplicates
+    a vararg is made into an array and so the following are duplicates and will not compile
     foo(boolean flag, int...items);
     foo(boolean flag, int[] items);
 
@@ -402,7 +413,7 @@ In the above class definition, the constructor is:
 	 id = newId;
 } and it initializes each new Student object with an id value of newId
 
-If a constructor is not provider, the compiler will create a default constructor called a no-args constructor (no parameters).
+If a constructor is not provided, the compiler will create a default constructor called a no-args constructor (no parameters).
 eg class Student{
    int id;
 }
@@ -425,7 +436,7 @@ Why constructor overloading?
 
 Constructors can have a return statement but it doesn't return anything.
 
-we use this so that we can access instance variables that are hidden (or shadowed) by local variables.
+we use this keyword so that we can access instance variables that are hidden (or shadowed) by local variables.
    class Student{
    	 int id;
 	 String name;
@@ -436,12 +447,13 @@ we use this so that we can access instance variables that are hidden (or shadowe
 }
 
 we use this.name in the updateProfile() method because one of the method parameters is called name which happens to be one of the instance variables of the Class. So anytime you are in the method and you use name, you are referring to the parameter name. You'd have to use this.name in order to get the instance variable.
-Static methods are class methods so they can not use the this reference as this reference is used to access variables and instance methods only.
+Static methods are class methods so they can not use the this reference as this reference is used to access instance variables and instance methods only.
 
-You can run a class from a different file in another as Java will automatically search and compile the file with the right class. You do not need to compile both files.
+You can run a class from a different file as Java will automatically search and compile the file with the right class. You do not need to compile both files. Note that this is
+subject to certain accessibility restrictions and package setups. [Classes in the same file folder, with no other explicit package definitions are assumed to be in the same package and will be compiled together]
 
 Reassigning Object References
-By default Java passes by reference. See the ReassignObjectReferences.java file. Any object in memory left without reference will be freed up by Java's garbage collection
+By default Java passes by value. See the ReassignObjectReferences.java file. Any object in memory left without reference will be freed up by Java's garbage collection
 
 Operator
 	A symbol which performs an operation on its operands and produces a result.
@@ -519,7 +531,7 @@ If body of any of the control statements has more than one statement, use curly 
 if, for, while, do while, switch
 
 if(x > 7){...}
-else if{...}
+else if(x == 5){...}
 else {...}
 
 switch(x){
@@ -535,7 +547,7 @@ switch(x){
 }
 
 a switch expression's numerical final value SHOULD EVALUATE TO AN INTEGER. Thus items submitted to the switch expression should be converted to integers and then compared.No duplicate values should be placed in the switch expression. Note that the range of the case values should be in the data type range.
-Case label value must be a constant expression.Can be an integer or string literal. eg final int = 4;
+Case label value must be a constant expression.Can be an integer or string literal. eg final int label = 4;
 only constants can be used as cases
                                  in a switch statement, hence the use of fin\
 al. This is because the switch statement is setup during compilation so it n\
@@ -563,7 +575,7 @@ To iterate over array elements.
 for(int i = 0; i < 10; i++){...}
  Initialization part of for loop can be done on the outside. eg
    	   int i = 0;
-	   for(;i<10; i++){...}
+	   for(;i<10; i++){...}		UGLY
 for-each Statement
 Iterate arrays & other data structures
 for(int i: array){
@@ -589,7 +601,7 @@ Infinite loops
 break statement
 Exits immediately enclosing swith or loop (for/while). A break statement needs to be in a switch or for/while loop otherwise it will be invalid
 Labeled break Statement
-How about if you want to exit one of the outer switch/loop. First we label the block statement label: block statement
+How about if you want to exit one of the outer switch/loop. First we label the block statement label: block statement eg outermost: THEN we use the statement break outermost;
 A block statement contains 0 or more statements enclosed in curly braces eg any control statement with a brace. Once we have labeled a block , we can use the break label; command to break;
 continue statement
 	 continues with the next iteration of the innermost loop. skips the rest of the loop and goes to the next cycle.
@@ -623,7 +635,7 @@ Accessing Packages
 if classes are on the same package, they usually have direct access
 if in a different package,
 	 - use import statement
-	 - use the fully qualified class name - rare package_name.class_name		even if we wrote the class we may have to use these
+	 - use the fully qualified class name - rare package_name.class_name. Even if we wrote the class we may have to use these
 
 import Statement
 eg import java.util.ArrayList;
@@ -648,7 +660,7 @@ Or you can use explicit imports for specific classes.
 
 Alternative to using import is to use the fully-qualified class name eg
 	    java.util.ArrayList list = new java.util.ArrayList();
-This is cumbersome and is only useful if say we want to use java.util.Date & java.sql.Date in the same class. You would need to use at lease one fully qualified class-name or both as shown below.
+This is cumbersome and is only useful if say we want to use java.util.Date & java.sql.Date in the same class. You would need to use at least one fully qualified class-name or both as shown below.
 
 Solution 1
 USE ONLY ONE EXPLICIT IMPORT
@@ -704,12 +716,36 @@ Package name may not be valid because of hyphens or other special characters\
 n this case the suggested convention is to add an underscore
 eg java_bootcamp.StudentPackage above
 
-When creating a package make sure there is a matching directory structure that matches the name of the package
+***When creating a package make sure there is a matching directory structure that matches the name of the package
+eg if your package is called methods.math and your class file part of that package is Trigonometry.java, then
+Trigonometry.java needs to be in the folder directory methods/math/
+Trigonometry.java will look like this:
+
+package methods.math;
+class Trigonometry{...}
+
+We compile this file as normal using the Java compiler command: javac Trigonometry.java
+The generated class file can be misleading. When you look at it it is called Trigonometry.class, however,
+it actually does not contain a Trigonometry class. This is because any .java file that contains a package statement at the top
+is compiled to produce a class file which includes the package name in it. Thus our Trigonometry.java file with the
+package methods.math; statement up top is compiled into a class called "methods.math.Trigonometry".
+In order to run this bytecode we use the java command but things are different from running a regular class file which is not associated with a
+package. The interpreter looks to find our class in the class path first. Once it gets to the class path, it uses the name of the
+package to navigate into the folders to find our bytecode. That is why it is important that a folder structure that matches your package name
+actually exists. So the full path that the interpreter will look is equal to the CLASSPATH + package-path. In the above example,
+the package path is methods/math/ so our CLASSPATH needs to be the file directories that connect down to the methods/ folder
+eg /User/Documents/user1/ .We can set the CLASSPATH permanently by typing export CLASSPATH=/User/Documents/user1/ in the terminal
+Then we can run the java methods.math.Trigonometry and we will evaluate the bytecode as normal. We can also temporarily explicitly specify
+the classpath for a given run by using the -cp flag and specifying the folder structure where we want our classpath to go eg
+java -cp ../upper_folder/ ../upper_folder/A_Class
+
+Explanation 2 
 Then we need to use a package statement at the top of the class.
 Once a package statement is placed on top of a class, the package name becomes part of the class name so for example the command to interpret the bytcode java Basics will no longer work for a class Basics with a package statement but you will have to use java bswiswa.javacoding.Basics ie a fully qualified name.
 **NOTE THAT you still compile the class using javac Basics.java and the output class is still called Basics.class and not bswiswa.javacoding.Basics.class
-To make it work, you may have to change the CLASSPATH to the parent folder of your package so you can run it anywhere. On UNIX you have to use the terminal command: export CLASSPATH=/Users/macbookpro/Documents/java-bootcamp/ for example
-NOrmally once the class files are created and we wanted to share the class files externally in the form of a library, we would create a library and we would share the JAR file. The JAR file only has the class files.
+To make it work, you may have to change the CLASSPATH to the PARENT FOLDER of your package so you can run it anywhere eg if the path to your package files is /Documents/code/package/PackageFile.java, then you need on UNIX, you should type the command,
+export CLASSPATH=/Document/code/ because since the package name will become part of the class name on compilation, when you run the java command to run the virtual machine, the interpreter will look into the path defined by adding the CLASSPATH + class name so it will be CLASSPATH+PackageName/ClassName. On UNIX you have to use the terminal command: export CLASSPATH=/Users/macbookpro/Documents/java-bootcamp/ for example
+Normally once the class files are created and we wanted to share the class files externally in the form of a library, we would create a library and we would share the JAR file. The JAR file only has the class files.
 
 Sub-packages
 Packages help to meaningfully organize our classes. Sometimes in large projects, a single package can have numerous groups of classes that perform some specialized functions. These groups of classes can be more meaningfully be organized into subpackages eg java.util & java.util.concurrent
@@ -731,15 +767,15 @@ Component Naming Conventions
 	  Never start with java or javax as these words are used with the standard java API.
 
 Note on ClassPaths
-If classpath is set, java interpreter would scan each of the paths in classpath to run the program specified on the command line. javac command, on the other hand, will not rely on the classpath to compile the program specified on the command line. It will always try to compile the program specified on the command line by looking for that program in the same directory where the javac command is being executed, i.e., if the command is javac HelloWorld.java, then if HelloWorld.java is available in the same directory where this command is executed, then HelloWorld.class will be generated. This is however not the case with java interpreter, which always uses classpath to find the .class file specifed on the command line. 
+If classpath is set, java interpreter would scan each of the paths in classpath to run the program specified on the command line. javac command, on the other hand, will not rely on the classpath to compile the program specified on the command line. It will always try to compile the program specified on the command line by looking for that program in the same directory where the javac command is being executed, i.e., if the command is javac HelloWorld.java, then if HelloWorld.java is available in the same directory where this command is executed, then HelloWorld.class will be generated. This is however not the case with java interpreter, which always uses classpath to find the .class file specifed on the command line.
 
-For all non-JDK classes that are accessed from the program specified on command line, both javac & java will rely on paths in the classpath. 
+For all non-JDK classes that are accessed from the program specified on command line, both javac & java will rely on paths in the classpath.
 
 Note that classpath can also be set temporarily while running a javac or java command in the following way. The option -cp is followed by the path (C:\java). Instead of -cp, -classpath can also be used. Note that path can also be simply dot (.) indicating current directory. However, if you want to set classpath permanently, then you should set it as environment variable.
+eg if Hello.java is in the java folder
+javac -cp C:\java\ C:\java\Hello.java
 
-javac -cp C:\java Hello.java
-
-java -cp C:\java Hello
+java Hello
 
 Finally, recall that javac will always try to automatically compile any source files accessed from the program specified on the command prompt. If the .class files have already been generated for those files, then javac will still recompile those source files that have a later timestamp than the corresponding .class files, i.e., they have been modified after the .class files were generated.
 
@@ -750,15 +786,15 @@ String class is part of java.lang.String package
 String s = new String(); //empty string
 String s = new String("hello") // a string is enclosed in double quotes (character literals are in single quotes 'c'.
 string literal is a string object. Internally it is passed as an object;
-So in the initialization String s = new String"hello!");
+So in the initialization String s = new String("hello!");
 s is an object reference to a string object and we are creating by passing another object reference as input to the constructor.
 
 also we can do char cArray[] = { 'h', 'e', 'l', 'l', 'o'};
      	       String s = new String(cArray);
 
-or the recommended way String s = "hello!"; here, hello is still a string object reference;
-Internally the string class uses a character array to storre text. A string in Java is basically a sequence of unicode character.
-Strings are immutable - once created, the value is never changed. So a string object contains a immutable string of unicode characters.
+or the recommended way String s = "hello!"; here, s is still a string object reference;
+Internally the string class uses a character array to store text. A string in Java is basically a sequence of unicode characters.
+Strings are immutable - once created, the value is never changed. So a string object contains an immutable string of unicode characters.
 +  operator can be used for String concatenation
 All strings created using string literals are saved in a location called String pool. The pool helps save memory by not duplicating strings.eg two strings with the same text inside. This does not happen with Strings created using the new keyword. If you create two identical strings with the new keyword, then there are duplicates created.
 
@@ -767,7 +803,7 @@ String class
 Comparing
 Searching
 Examining characters
-Extract siblins
+Extract substrings
 Case translation
 Replace
 Split
@@ -784,14 +820,15 @@ String literals are stored in a special area of the heap memory (where all objec
 Identical String literals share same storage. As long as the strings are created during  a single JVM process.
 Strings created via the new keyword are stored as regular objects also on the heap section of memory but not in the string pool. They get their own storage and identical strings do not share storage.
 When a String is created as a string literal say String s1 = "Hello"; a string object is created in the string pool and s1 stores the memory location of that object. If another string s2 is created with the same literal eg String s2 = "Hello"; then no new string object is created and s2 points to the same memory location of the previously created "Hello" object. Thus s1 == s2 is true.
-If another string reference is created but using the new keyword eg String s3 = new String("Hello"); the identical object is still passed to the constructor String() and so it doesn't create a new String object in the pool since "Hello" is already there. Instead, it creates a string object  outside of the string pool pointing to that string object in the string pool. Then the location of this secondary object is passed back to s3. If another string is created with the new keyword again, String s4 = new String("Hello") another separate object is created outside of the string pool, in heap memory. This object still references the "Hello" in the string pool. The location of this object is assigned to the new object reference s4. Thus s3 == s4 is false 
+If another string reference is created but using the new keyword eg String s3 = new String("Hello"); the identical object is still passed to the constructor String() and so it doesn't create a new String object in the pool since "Hello" is already there. Instead, it creates a string object  outside of the string pool pointing to that string object in the string pool. Then the location of this secondary object is passed back to s3. If another string is created with the new keyword again, String s4 = new String("Hello") another separate object is created outside of the string pool, in heap memory. This object still references the "Hello" in the string pool. The location of this object is assigned to the new object reference s4. Thus s3 == s4 is false
 
 In general, when a string is created with the new keyword, first if that string doesn't exist in the string pool, then a new string object is created in the string pool, containing the string literal passed into the String constructor. Then outside of the string pool, another string object is created and this one references the one inside of string pool. The memory address of this secondary object is passed back to the String reference object. Thus, two string objects are created on the heap memory in this case.
 
 So the string pool stores a single copy of each string literal as a string object. The string pool only stores string objects. There is only one copy of string pool on the heap. It is also called string table.
 The process of building the string pool is called interning. Each string object in the pool is called an intern
-When JVM received  a string literal for the first time, it creates a new String object with the given literal. Then it invokes the intern() method . The intern method checks if the string is already in the string pool. If it is there, it returns a reference of that existing object. JVM then abandons the newly created object. If string pool doesn't contain the string, then the string object is added to the string pool and returns its reference.
-If the same literal is encountered once again, then JVM checks if the intern method was previously called on such a literal and if so returns its reference. JVM always checks if invoke was previously called on a literal.
+When JVM receives  a string literal for the first time, it creates a new String object with the given literal. Then it invokes the intern() method . The intern method checks if the string is already in the string pool. If it is there, it returns a reference of that existing object. JVM then abandons the newly created object. If string pool doesn't contain the string, then the string object is added to the string pool and returns its reference.
+If the same literal is encountered once again, then JVM checks if the intern method was previously called on such a literal and if so returns its reference. JVM always checks if
+intern was previously called on a literal.
 
 When two literals are concatenated, their result is interned as the concatenation produces a literal whose value is known at compile time.
 so String s = "hel" + "lo"; ->this expression is interned
@@ -802,12 +839,12 @@ String Immutability
 Once a string is created, its value cannot be changed
 String s1 = new String("abcd");
        s1 = new String("1234"); // above object "abcd" is abandoned. The references can be reused which is why we could assign s1 to something else
-       Why immutable strings? it would affect string interning as the same string object could alter a shared object leading to serious errors for the other references.
-       Also affects concurrency as multiple threads may be sharing the same string.
-       Also creates security vulnerabilities by allowing hackers to alter input strings and gaining access to other parts.
-       
+       Why immutable strings? it would affect string interning as one String object reference could alter the shared String object leading to serious errors for the other references.
+       Also affects concurrency as multiple threads may be sharing the same string object
+       Also creates security vulnerabilities by allowing hackers to alter input strings and gaining access to critical parts of programs.
+
  String concatenation
-+ operator All non-string operands will be converted to String if a string comes first 
++ operator All non-string operands will be converted to String if a string comes first
   eg String s = "hello"+ 1 + 3 -> "hello13"
   but String s = 1 + 3 + "hello" -> "4hello"
 Evaulation always happens from left to right for the + operator. Precedence can be set using parentheses.
@@ -840,9 +877,9 @@ Note that the escape sequence is not required to put the " or ' in a string.
 Access Levels and Hiding of Information
 Access levels provide restrictions on accessing classes and their members.
 eg we may want a class to only be accessed by other classes in the same package. We may not want other external classes to create instances of that class.
-In most cases, you'd want the class to be accessible to all classes inside and outside of that package. 
-This is done by using the keyword public in the class declaration. public is an access modifier. eg public class Basics{...}. 
-If you don't use any default modifier, the package is only available in the package.
+In most cases, you'd want the class to be accessible to all classes inside and outside of that package.
+This is done by using the keyword public in the class declaration. public is an access modifier. eg public class Basics{...}.
+If you don't use any explicit access modifiers, then the default modifier is that the class is only available in the package.
 
 Accessibility for Class Members
 Inside class - member only accessible within the class that it is defined. For this you use the private access modifier.
@@ -852,12 +889,12 @@ Finally we may want members to be accessible to any code regardless of where it 
 private and public are the most used. protected is rarely used.
 
 Members of a class have additional access restrictions -> private and protected
-public and default classes apply to both.
+public and default modifiers apply to both classes and members
 
 private Access Modifier
 private member variables can only be defined at class level. any private member variable created inside a method is already private to that method, so this results in a compile error
- eg private int id; // visible only within the class.  
-void method(){	
+ eg private int id; // visible only within the class.
+void method(){
      private int b; //this causes an error since b is already private to method()
 }
 
@@ -869,6 +906,8 @@ eg class Student{
    String name;
 }
 
+A PRIVATE METHOD CAN ONLY BE RUN INSIDE OF THAT CLASS
+
 Student s1 = new Student();
 s1.id = 1;
 Student s2 = new Student();
@@ -879,7 +918,7 @@ By using access modifiers we can restrict the parts of the code that can be seen
 Information Hiding
 WE MUST TRY TO RUN GOOD PROGRAMS RATHER THAN FAST ONES. USE GOOD DESIGN PRINCIPLES FIRST
 Encapsulation
-A language facility that allows bundling of data and methods that manipulate that data. It is done using a class in Java eg 
+A language facility that allows bundling of data and methods that manipulate that data. It is done using a class in Java eg
   public class Student{
   	 //variables or data
 	 public int id;
@@ -898,7 +937,7 @@ ENCAPSULATION ALONE DOES NOT LEAD TO GOOD DESIGN
 eg for the previous example, the variables are all available to the public. This can lead to tight coupling
 Tight coupling
       can't enforce invariant (or range)
-      eg for a gender field, we cannot restrict the possibilities to "male", "female" and "transgender" since client code can directly access and change the gender field to any value they wish. 
+      eg for a gender field, we cannot restrict the possibilities to "male", "female" and "transgender" since client code can directly access and change the gender field to any value they wish.
       can't change data representation eg if we want to change one of the variables to a different type, the client code may be affected. We cannot change it without possibly compromising the end user's program. If we have an API for a package, the end user expects that none of the available methods will change for a long time.
       IN PUBLIC CLASSES, USE ACCESSOR METHODS, NOT PUBLIC FIELDS
 Accessor methods
@@ -923,27 +962,27 @@ How do accessor methods help us avoid the problems that come from tight coupling
       	    private String gender;
 	    public void setGender(String gender){
 	    	   if(gender.equals("male") || gender.equals("female") || gender.equals("transgender"){
-		   this.gender = gender;	
+		   this.gender = gender;
 		   }
 		   else{
 		   throw new IllegalArgumentException("Wrong gender passed!!");
 		   }
-		    }	
+		    }
 	public String getGender(){
-	       return gender;   						
+	       return gender;
 	       }
-} 
+}
 
-We can also change our own internal representations and leave our implementations without affecting the clients. The code is now loosely coupled. API is the same and there is no access to the backend of the API.
+We can also change our own internal representations and refactor our implementations without affecting the clients. The code is now loosely coupled. API is the same and there is no access to the backend of the API.
 
-Loosely Coupled Systems 
+Loosely Coupled Systems
 	allow us to develop, test, use and optimize in isolation
 	useful code in multiple projects and decreases risk of building large projects.
 
 MINIMIZE THE ACCESSIBILITY OF CLASSES AND MEMBERS
 General suggestion is:
-1. carefully design a minimal public API of your class. 
-2. See which of the members will really be needed by client and make them public 
+1. carefully design a minimal public API of your class.
+2. See which of the members will really be needed by client and make them public
 3. Make all the others private
 4. Make a member default only if really needed
 [frequent changes mean you need to reexamine your design!]
@@ -968,13 +1007,13 @@ only static method, private constructor (non-instantiable)
 commonly used is the random method - Math.random()
 returns a double between 0.0 & 1.0 exclusive (never returns 1.0)
 so to generate a random integer between 0 and 10 then we do
-int rand_num = (int)Math.random()*10 
+int rand_num = (int)Math.random()*10
 
 Math.abs()
 returns absolute value
 
 Math.round()
-rounds argument to the nearest long or int based on the data type of the argument eg Math.round(23.4) -> 23L, 
+rounds argument to the nearest long or int based on the data type of the argument eg Math.round(23.4) -> 23L,
 However if argument is FLOAT, IT IS ROUNDED TO NEAREST INT. This is because the two types that Math.round returns are long and int. Long is 64 bits whilst int is 32 bits. double is 32 bits so a double number like 23.4 is returned as a long number 23L. A float is 32 bits, same as integer so it is returned as an integer.
 
 Math.ceil()
@@ -991,7 +1030,7 @@ returns the positive square root of a double. Returns NaN if argument is NaN or 
 
 Static Variables
 declared with keyword static. Independent of any instance of the class.
-Declared directly within class. Will result in compilation errors if declared within a method. 
+Declared directly within class. Will result in compilation errors if declared within a method.
 They are assigned a default value if they are not explicitly initialized.
 Accessibility: if declared with a public access modifier, then any code outside of the class can access it via the class name ie ClassName.variable
 Any code inside of the class can access it directly be it static or instance methods. If it has default access (ie not public static but just static), then only classes in that package can access that variable
@@ -1056,7 +1095,7 @@ initializes instance variables the syntax is { ... } so it is the same as the st
 But constructors initialize state so why do we need instance initializers?
     it is useful when sharing a block of code between multiple constructors
     under the hood, the Java compiler will copy every initializer block into the beginning of every constructor
-There can be multiple initializers and they will be executed in the order that they appear	
+There can be multiple initializers and they will be executed in the order that they appear
 They can also reference static members
 
 So in summary, static initializer blocks help when initialization cannot be done in one line. syntax is static{...}
@@ -1069,7 +1108,7 @@ eg public static final double PI = 3.14159265358979323846;
 final keyword implies constant
 If it is used with a primitive variable - value is constant
 If it is used with a reference variable, then the reference is constant, not the object content itself - this applies to objects eg arrays...thus the array content can be changed, but we cannot assign a new array to the variable as the new array would have a different memory address
-(what about strings? the object is immutable and so if the reference is immutable as well, then it must be constant)
+(what about final Strings? the object is immutable and so if the reference is immutable as well(final), then it must be constant)
 final variables do not get a default value because if it can be initialized once again later, then that goes against the whole principle of final - which is that we want the variable's value to remain fixed forever.
 final keyword can be used with instance, local or static variables
 
@@ -1081,7 +1120,7 @@ If declaration lacks an initializer and is initialized later in a constructor or
 final local variable is straightforward - once initialized, it cannot be changed (and it has to be initialized at declaration)
 final static Variable
 These are class variables once initialized it is constant regardless of the number of instances are created. Must be initialized during declaration or during the static initializer block.
-Naming convention of static variables -> should be all CAPS_WITH_UNDERSCORE_SEPARATING_WORDS eg private static final int COPY_THRESHOLD = 10;
+Naming convention of static constants -> should be all CAPS_WITH_UNDERSCORE_SEPARATING_WORDS eg private static final int COPY_THRESHOLD = 10;
 Constant Variables
 Constant variables are a special type of final variable whose VALUE IS KNOWN AT COMPILE TIME
 For this reason they are usually referred to as compile time constants
@@ -1093,7 +1132,7 @@ Constant variables are final variables with the following restrictions:
 	 - data type needs to be primitive data type or String (string obj is immutable so both reference and object cannot be changed as in the case of arrays and other objects)
 	 - initialized in the declaration statement itself, not in constructor or initializer or static block
 	 - initialized with a compile-time constant expression - value is known at compile time itself. eg primitive literals or string literals
-	   final int x = 23; 
+	   final int x = 23;
 	   final int x = 23 + 5;
 	   final String x ="helo" + "world!";
 	   final int z = 5;
@@ -1200,7 +1239,7 @@ eg void veryExpensive(){
    	    sum = sum + i;
    }
 }
-In the above code, we cannot store the final sum in an integer value because it would be too big and so we use a long type to store it. This program will work correctly but is much slower than it should be because of the usage of the Long wrapper class instead of primitive long. 
+In the above code, we cannot store the final sum in an integer value because it would be too big and so we use a long type to store it. This program will work correctly but is much slower than it should be because of the usage of the Long wrapper class instead of primitive long.
 In the code above in sum = sum + i, the + operator has two operands of different types, the boxed primitive Long sum and the primitive long i. Recall that arithmetic operation rule included the operand promotion rule eg if you add a double to an int, the int is promoted to double.
 In sum + i, one operand is an object and the other is a primitive. In this case auto-unboxing occurs on sum from Long to long. Then long sum is added to long i. After the addition, the total is assigned back into sum, which is a Long boxed primitive and so the total is autoboxed again and assigned to sum. So roughly 2^31 Long object instances are being created which is a very expensive procedure.
 Always use primitives when you are doing intensive operations.
@@ -1221,7 +1260,7 @@ for the above code, you would get a NullPointerException error. This is because,
 Coding Conventions
 Naming
 ADHERE TO GENERALLY ACCEPTED NAMING CONVENTIONS
-Typographical conventions - more about appearance eg upper or lower case 
+Typographical conventions - more about appearance eg upper or lower case
 Grammatical conventions - more of part of speech eg nouns, verbs, adjectives
 packages
 	lowercase alphabetic characters, rarely digits
@@ -1229,7 +1268,7 @@ packages
 	should have meaningful abbreviations eg util for utilities
 	acronyms are fine eg awt for Abstract Window Toolkit
 	never start with java or javax which are used by standard Java API
-	use organization's reverse internet domain name 
+	use organization's reverse internet domain name
 Classes
 	 Capitalize first letter of each word
 Methods and Variables
@@ -1257,14 +1296,14 @@ Grammatical
 		sometimes has is used eg hasLicence()
 		Non-boolean methods - use attribute name. Use get and set in
 		pairs
-		Special methods 
+		Special methods
 		- Object type conversions - use to eg toString, toArray
 		- static factory - eg valueOf, of, newInstance, newType
 	Fields
 		boolean usually adjectives eg active rather than isActive
 		non-boolean - nouns and noun phrases
 		singular and plural nouns
-		name objects of same class by purpose eg 
+		name objects of same class by purpose eg
 		void sendMessage(User sender, User receiver)
 Structuring Programs
 Class organization:
@@ -1285,7 +1324,7 @@ Class size
 Method size
        small and focused
        should do only one thing
-       recommended reading - Clean Code: A Handbook of Agile Software 
+       recommended reading - Clean Code: A Handbook of Agile Software
        Craftsmanship by Robert C. Martin
        recommends that methods should hardly ever be more than 20 lines of
        code
@@ -1305,7 +1344,7 @@ Stylistic conventions
 	  	   break after comma eg method calls & declarations
 		   break before operator eg if blocks, arithmetic ops
 	use 8 space rule(or 2-tab)
-	When using Eclipse, you can can use the CTRL-Shift-F or 
+	When using Eclipse, you can can use the CTRL-Shift-F or
 	Command-Shift-F on Mac to format your code
 
 Comments
@@ -1323,7 +1362,7 @@ Comments
 	/* */ can also be used to disable part of code
 	Documentation comments are called javadoc comments
 	They start with /** eg /**API details...*/
-	If source code includes javadoc comments then a javadoc parser 
+	If source code includes javadoc comments then a javadoc parser
 	can extract the comments and generate HTML from it
 Implementation Comments
 	       Used inside methods or with private fields
@@ -1345,6 +1384,308 @@ Documentation Comments
 	      implementation as block comments
 Using the javadoc tool
 start with /**
-put a brief overview of class inside. 
+put a brief overview of class inside.
 Select the files or project you want to generate Javadocs for. Click
-Project and Generate javadoc  
+Project and Generate javadoc
+
+Introduction to Thrill.io
+Thrill.io is a social bookmarking site which will be serving as a case study for the different topics to learn in Java
+
+User Types in Thrill.io and functions
+User, EmailAdmin, Editor & ChiefEditor
+
+User functions:
+
+User		: saveWebLink(), saveMovie(), saveBook(), rateBookmark(),
+     			postAReview()[needs approval]
+
+EmailAdmin	: saveWebLink(), saveMovie(), saveBook(), rateBookmark(),
+		          postAReview()[no approval], handleEmailCampaign()
+
+Editor		: saveWebLink(), saveMovie(), saveBook(), rateBookmark(),
+		          postAReview()[no approval], approveReview(),
+			  rejectReview()
+
+ChiefEditor	: saveWebLink(), saveMovie(), saveBook(), rateBookmark(),
+		          postAReview()[no approval], approveReview(),
+			  rejectReview(), updateHomepage()
+
+Inheritence
+Each user in Thrill.io can be thought of as a class. Looking at these
+classes, it is apparent that they share a lot of methods - all classes
+have the following identical behaviors: saveWebLink(), saveMovie(),
+saveBook(), rateBookmark()
+What does that mean?
+It means that we will have duplicate code which leads to a maintenance
+nightmare. The solution for this is Inheritence
+Inheritence is one of the fundamental features of OOP. We abstract all the common features and place them in one Superclass and the remaining classes become subclasses. Such a design is an inheritence hierrarchy.
+Subclasses inherit non-private features from superclasses - variables and methods. In fact subclasses can access superclass members directly without any special operator. A superclass can never access members of a subclass however
+
+Thus the user functions defined above now look like:
+
+User[Superclass]	:saveWebLink(), saveMovie(), saveBook(),
+			rateBookmark(),
+                        postAReview()[needs approval,
+				 this function is unique to
+				 User as other user types need no
+				 approval]
+
+EmailAdmin		:[inherit from User], postAReview()[no approval],
+			 handleEmailCampaign()
+
+Editor			:[inherit from User], postAReview()[no approval],
+			 approveReview(), rejectReview()
+
+ChiefEditor		:[inherit from User], postAReview()[no approval],
+			 approveReview(),rejectReview(), updateHomepage()
+
+Inheritence promotes code reuse and makes it easy to maintain. If Superclass adds new methods, subclasses will easily inherit them.
+
+Subclasses are specialized versions of super classes
+	   inherit members, add new members, override superclass methods
+Subclass = Superclass + Subclass unique capabilities
+Superclass is sometimes called a supertype or base class
+Subclass is sometimes referred to as subtype or derived class
+You will notice that even across subclasses, we can apply additional inheritence - they all share the postAReview() method; Editor and ChiefEditor user types both share the approveReview() and rejectReview() methods
+
+    	 	     	  	 User
+			______________
+			saveWebLink()
+			saveMovie()
+			saveBook()
+			rateBookmark()
+			postAReview()[requires approval]
+
+				Staff
+			_____________
+			postAReview()[no approval needed]
+
+	EmailAdmin				Editor
+__________________			_________________
+handleEmailCampaign()			approveReview()
+					rejectReview()
+
+					ChiefEditor
+					_________________
+					updateHomepage()
+
+Applying the additional inheritence, we come up with a new design shown
+above. Here, an additional class has been created called Staff which is for
+the shared postReview() method which staff have which is different from a
+regular user by not requiring approval. A subclass will inherit members from all its superclasses.
+Extending a Class
+A keyword called extends builds inheritence. A subclass would use the keyword to inherit from a superclass. Here are the resulting class declarations
+class User{}
+class Staff extends User{}
+class EmailAdmin extends Staff{}
+class Editor extends Staff{}
+class ChiefEditor extends Editor{}
+
+A CLASS CAN EXTEND FROM ONLY ONE CLASS
+
+Access Modifiers & Inheritence
+What members of a superclass can be accessed by its subtypes?
+Classes in a package are like a family. Access modifiers allow us to specify what data and methods are available to family members (classes in the same package) versus non-family members (classes outside of the package)
+Inheritence Accessibility:
+	    private - NEVER INHERITED
+	    default - inherited IF FROM FAMILY(same package)
+	    public - inherited by anyone
+	    protected - inherited by family members (same package)
+	    	      - inherited by subclasses inside and outside of
+		      	package
+			[once inherited, the member should not be available 
+			to any non-family member]
+How would you know which of the classes should be a superclass and which
+should be a subclass?
+Blindly creating inheritence relationships could be dangerous. There are
+a few tests we can use to determine  the best way to design the inheritence
+relationships.
+The Is-A test is one such test. It is the most fundamental test for inheritance
+
+eg Staff IS-A User
+   Editor IS-A Staff
+   Editor IS-A User (automatically valid due to the previous test)
+   EmailAdmin IS-A User
+   EmailAdmin IS-A Staff
+   ChiefEditor IS-A User
+   ChiefEditor IS-A Staff
+   ChiefEditor IS-A Editor
+
+The Is-A relationships works in one direction eg Staff IS-A User but User is not a Staff as we know that a Staff has some more specialized functions that
+are not available to a User
+
+There are other tests that you should apply
+If the IS-A test is failing for a relationship, that means that you must
+definitely not use an inheritence relationship
+eg Bookmark IS-A Review
+   Review IS-A Bookmark
+
+However
+   Bookmark HAS-A Review -> yep
+A HAS-A relationship is also known as composition. In some cases, composition
+is preferred over inheritence
+
+   Bookmark IS-A Tub -> NO
+   Tub IS-A Bathroom -> NO
+   Bathroom HAS-A Tub -> yep
+
+Polymorphism
+Defining Contract
+Every class defines a contract through its methods. That is it announces
+the kinds of methods it has. If the class is public, then the contract is
+the API.
+If the class is a superclass/supertype, its contract is defining a common protocol for itself and all its subtypes -> Me & my subtypes have these kinds
+of methods...
+By defining these common protocols for its subtypes, the supertype is 
+providing the benefit of polymorphism. What are these benefits?
+With polymorphism, a supertype can be assigned any of its subtypes ie
+Supertype = subtypes
+So if we have a method in the supertype void updateProfile(User u) and User is the super class to Staff, Editor and ChiefEditor, then we can call the
+updateProfile method with all any of the instances of the subtype objects eg
+updateProfile(Staff s) or updateProfile(Editor e) or updateProfile(ChiefEditor c). All the objects of the subtypes can substitute the supertype's object instance (User u) in this case.
+The substitution for the supertype's instances can take many forms and hence
+the term polymorphism. In the example above, the method parameter is a
+polymorphic reference[note that event the method return type can be a 
+polymorphic reference].
+This means that we can have one method in the supertype class which we can 
+reuse in all the other classes. - MORE FLEXIBLE & LESS MAINTENANCE
+This also leads to MORE REUSABLE CODE and LESS OVERALL CODE in general
+If more subtypes were to be added in the future, our methods would not need to be updated
+Being able to substitute the supertype's object instance means that in 
+polymorphism, the reference type and actual object type can be different eg
+User u = new EmailAdmin();
+the reference type is the supertype User but the actual object type is EmailAdmin, a subtype of User.
+Now that the reference type and the object type can be different, we need to
+understand the possibilities and limitations with regards to method invocation
+- compiler uses reference type to decide whether a method can be invoked
+
+eg User u = new EmailAdmin();
+   u.handleEmailCampaign(); // gives compile error
+This is because the compiler knows that the User class does not have this method.
+But at run time, JVM uses the actual object type to decide which method is invoked and invokes the most specific version of the method in the inheritence tree. It starts in the actual object's class and searches up through its supertypes till it finds the method then excecutes it.
+
+Casting Objects
+Primitive casting
+	  implicit[when destination type > current type] eg float f = 25;
+	  explicity[when destination type < current type] eg int x = (int)42L
+	  
+In polymorphism we are able to pass a subtype object as an alrternative argument to the method parameter which is of type superclass.
+This is basically implicit casting in action that is the subclass object is
+implicitly cast to the supertype variable
+However, once implicity casting is performed, we can only perform those 
+methods that are defined in the superclass. Any methods specific to the subclass are no longer valid eg
+	Staff s = new Editor();
+	s.approveReview(); // compiler error
+This is because the compiler uses the reference type to decide whether a method can be invoked or not.
+In order to be able to use the subclass methods, we must explicitly cast the supertype object eg ((Editor)s).approveReview();
+
+Another example of explicit casting:
+	void approveReview(Staff s){
+	     ((Editor)s).approveReview(); // runtime error
+	}
+
+This causes a ClassCastException because Staff is a broad class that includes other subclasses of which Editor is a part of. But Staff is not an Editor.
+The last two examples can also be thought of in this way: 
+in Staff s = new Editor(); the object reference type is a Staff object reference but the actual created object is an Editor object thus when we use explicit casting ((Editor)s).approveReview(), the object instance actually has these methods.
+
+In void approveReview(Staff s){
+   ((Editor)s).approveReview();
+}, the passed object reference points to a Staff object so even when we 
+typecast this one, it doesn't contain the approveReview() instance method. Thus we get a runtime error.
+
+To avoid this runtime error, we can perform a logical test before doing the cast. Syntax:
+   objRef instanceof aClass
+The instanceof operator returns a true if the object referenced by the objectRef on the left is an instance or subclass  of Class on the right. Thus it is the object
+reference's object type that matters, not the reference type
+It doesn't have to be a diect instance of the class on the right
+
+User u = new User();
+Staff s = new Staff();
+User usr = new Staff();
+
+for the above: u instanceof User -> true
+    	       u instanceof Staff -> false
+	       s instanceof Staff -> true
+	       s instanceof User -> true
+	       us instanceof User -> true
+	       us instanceof Staff -> true
+
+Updated approveReview() method:
+	void approveReview(Staff s){
+	 if(s instanceof Editor){
+	      ((Editor)s).approveReview();
+	 } 
+	}
+
+thus approveReview(new Staff()) -> cannot aprove
+     approveReview(new Editor()) -> can approve
+     approveReview(new ChiefEditor()) -> can approve
+Java is referred to as a type safe language.
+This is relevant when casting objects. A lot of the compile time and run time
+errors we encounter when working with objects are due to the result of applying type safety rules
+Type Safety is the extent to which a programming language prevents type errors. These errors can lead to undesirable program behavior eg invoking a non-existant method on an object eg the class staff has no approveReview() method so our program should not allow us to do staff.approveReview()
+Buffer overflow - usually occurs in languages like C & C++. It is an out of bound write operation. eg char data[6] = "hello"; if we try to insert a character outside of the character array data's range it should be invalid ie
+data[6] = 'p'; In a type-unsafe language, this can overwrite data in the next
+memory location. This corrupts the data.
+A type safe language will try to avoid these errors
+Java enforces type safety at both compile time (static-type checking) & runtime(dynamic-type checking)
+C does static type-checking while Ruby & Python do dynamic type checking
+Static Type checking examples
+int i = 233.3; // compile error [larger type to a smaller type]
+we have to insert an explicit cast for it to work int i = (int)233.3;
+we also cannot invoke a non-exixting method eg Staff s = new Editor(); s.approveReview(); // Staff class does not have approveReview() method
+The solution once again is to use an explicit cast ((Editor)s).approveReview()
+Generics are all about type safety at compile time. Before generics, many of the errors were only caught at run time. But since the introduction of generics in Java 5, many of the errors were now caught at compile time itself which is more desirable as run time errors can be disastrous.
+Dynamic type checking
+ClassCastException
+	void approveReview(Staff s){
+	     ((Editor)s).approveReview(); //runtime error - Staff object cannot be cast to Editor type
+	     }
+	     approveReview(new Staff());
+
+ArrayIndexOutOfBoundsException
+	char[] data = { 'h', 'e', 'l', 'l', 'o'};
+	data[5] = ''; //runtime error - outside of array boundary
+
+Note that since statically checked languages do all the checks at compile time, they tend to be faster than dynamic languages which have to do all of the
+tests at run time
+Strong vs Weak Typed Systems
+No standard definition for strong or weak typed systems.
+Some agreed upon definitions are:
+     strong typing - no loopholes in type system
+     weak typing - some loopholes and can be subverted
+C is considered to be weakly typed as it seems to have loopholes.
+
+Method overriding
+Redefining behavior of superclass method
+ eg defining new behavior, extending behavior, providig better implementation (override bad code) eg when working with third party software you may have
+ to create a new class which extends the one with the method you want to override then rewriting the method
+Overriding method must have the same name.
+The supertype provides a common protocol for all its subtypes so when you override a method in the superclass, you are agreeing to fulfil a contract ie you are telling the outside world that the overriding method looks exactly like the overwritten method. Method overriding has some rules that are based on
+this notion of fulfilling the contract.
+rules:
+	must have the same name (as always)
+	the parameters should be kept the same
+	the return types must be compatible -> return type must be the same 
+	or must be subclass type [incompatible return type = compile error]
+	overriding methods must at least be as accessible as the overriden
+	method. - access level must be the same or friendlier eg cannot
+	override a public method and make it private.
+
+super Keyword
+ can be used to access a superclass method from a subclass. Typically used
+ for extending behaviour defined in superclass. If the method in super class is not overridden in subclass, then it can be accessed directly using the method name or via the super keyword - typically we use the simple method name. But if the method in the superclass is overridden but we want to access it, then you must use the super keyword eg
+ class Staff extends User{
+       void postAReview(){
+       	    super.postAReview();
+	    // behaviour extension code
+       }
+}
+	
+NOTE: we would get into an infinite loop if we do not use the super keyword in the above method
+After invoking the superclass method, we can now have additional code
+thus extending the behaviour defined in the superclass method. Sometimes,
+you will need to access the overridden mehtod from other subclass methods as well
+The super keyword is related to objects so it CANNOT BE USED inside a static
+method. 
+The super keyword can also be used to access a hidden field belonging to the superclass. It is hidden if a variable with the same name is defined in the subclass. Note that it is only variable name that matters here to hide a field, everything else like data type, static or non-static, access modifier is immaterial. If a class does not use the super keyword, it will always use a field in its own class.
