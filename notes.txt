@@ -1665,7 +1665,8 @@ The supertype provides a common protocol for all its subtypes so when you overri
 this notion of fulfilling the contract.
 rules:
 	must have the same name (as always)
-	the parameters should be kept the same
+	the parameters should be kept the same(SAME NUMBER AND TYPE)otherwise
+	it is an overloading method
 	the return types must be compatible -> return type must be the same 
 	or must be subclass type [incompatible return type = compile error]
 	overriding methods must at least be as accessible as the overriden
@@ -1689,3 +1690,145 @@ you will need to access the overridden mehtod from other subclass methods as wel
 The super keyword is related to objects so it CANNOT BE USED inside a static
 method. 
 The super keyword can also be used to access a hidden field belonging to the superclass. It is hidden if a variable with the same name is defined in the subclass. Note that it is only variable name that matters here to hide a field, everything else like data type, static or non-static, access modifier is immaterial. If a class does not use the super keyword, it will always use a field in its own class.
+eg id will access the id of the current class instance whereas super.id will access the super class id.
+
+Method Binding
+The compiler looks at the reference type to know whether or not we can call a particular method on an object reference. JVM on the other hand looks at the actual object type to know which method to execute at runtime. We have discussed it so far in the context of instance methods. What about static methods?
+
+Binding is associated with every method call. It occurs everytime we call a method. It is the mechanism of binding the method call to the method declaration and method implementation of the method being called. Method declaration is the method signature while method implementation is the method's body which gets executed at runtime. Thus a method call is associated with the method signature and its implementation and they are the two steps of method binding. They are also called method signature binding & method implementation binding
+
+Method Signature Binding
+1. compiler checks if the reference type of the object reference on which the method has been called has a compatible method which would include the same or compatible parameters
+2. if it finds one, then it writes the method signature details into bytecode, OTHERWISE it throws a compiler error
+This is method signature binding and it is always done regardless of whether the method is an instance or static method.
+
+Method Implementation Binding
+Then it is a question of which method to execute at run time, the decision can be made by either the compiler at compile time or JVM at run time, depending on the method in context.
+If the method is static, then the decision is made by the compiler based on reference type. 
+If the method is an instance method, then the decision is made by JVM based on object type. Recall how JVM starts with the most specific object and goes up the tree when looking for a method to run.
+Basically, binding of static methods is completed at compile-time[static methods are compile-time or early binding]. This makes sense because static methods are class methods and have nothing to do with objects which are created only at run time.So the decision of which static method to execute is done at compile time itself - compile time binding/early binding
+Binding of instance methods has to wait till run time as it is based off the object type, that is only based off the object encountered at run time will JVM be able to know which method to execute. Such a binding is called runtime or late binding. Note that even for instance methods, their signatures are still bound at compile time itself.
+Field Binding
+Whilst instance methods are late bounded, instance fields or variables are early bounded that is reference type is used to bind instance variables.
+So in Java, early binding applies to both static methods and fields(static or non-static)
+javap -v Hello.class can be used to show the bytecode of a compiled class
+You can see in the bytecode that there are commnands such as invokestatic or invokevirtual
+invokestatic is an instruction that we are using a static method
+invokevirtual is when we will be calling a an instance method which will be decided at run time.But it can be seen that the method's signature binding is already done by the compiler and it shows the parameter type and the return type of hte function as well. 
+At runtime, when JVM encounters the invokevirtual instruction, it already knows about the method signature because it is there in the byte-code so it looks at the object type and it searches the class corresponding to the object type and searches and tries to find that particular method and if it finds it in the same class, it executes it. Otherwise it will climb up the inheritence tree until it finds a method. So this is how it finds the most specific method to that object.
+Edge case
+Early binding by the compiler can lead to some unexpected results when there are two overriding methods with compatible types eg if we have a superclass User and a subclass Patient and both have a printNumber() method - one taking a double and the other taking an int see below
+public class User{
+       public void printNumber(double n){
+       	      System.out.println("Double!);
+       }
+}
+
+public class Patient extends User{
+       public void printNumber(int n){
+       	      System.out.println("Int!");
+	}
+}
+
+if we have the following code elsewhere:
+User p = new Patient();
+p.printNumber(5);
+
+We expect the Patient class's function to be called since at runtime, JVM starts with the most specific object that has the function that is being called on the object instance. However, during compilation, the compiler has already prefilled the method signature and left a invokevirtual command in the byte code. This invoke command will wait on the object encountered by JVM at runtime but the prefilled function signature will have been based off the compiler checking the reference type of the object -> User then checking that class to find a compatible method. It will find a method with the same name printNumber but a different parameter type - User class printNumber takes a double. However, because the numbers are both numeric and are thus compatible, the compiler prefills the bytecode with a printNumber function that expects a double as the parameter. 
+Now, at run time, JVM will look for the specific Class which gives the object its type and in that class it will look for a function based off of the prefilled bytecode function provided by the compiler. And so JVM will look for a printNumber functiont that takes a double as parameter. In Java the double needs to be explicitly cast to work with an integer so JVM will not use this ffunction and deem it as incompatible. It will search up the class inheritence tree until it finds the printNumber function in the User class and execute that.
+
+What is not Overriden?
+There are 3 things that cannot be overriden:
+      1. final methods: normal method declared with keyword final
+      	 eg final returnType methodName(){}
+      2. fields/static or instance variables - We can redeclare a variable
+      	 with the same name but the superclass variable of the same name is
+	 only hidden. Why are instance variables not overridden like the
+	 functions?
+	 When it comes to behavior it makes sense to pick the most specific
+	 type of behavior with respect to the object context. The same 
+	 does not hold for fields as whatever value the data has in whatever 
+	 class should be good enough. No need to go down the hierrarchy and
+	 pick a more specific value. Thus instance variables are also early
+	  bounded. If instead of redeclaring, the subclass simply reassigns
+	   the value, then we will see that value as there is only one version of that value
+      3. static methods - static methods are bound and set at compile time so by the time JVM is executing, it cannot pick another more specific static method.
+
+Static Methods & Overriding
+Can't use super keyword -> only qualifies to objects. If you need to access a
+hidden superclass method, then you need to qualify the method name by the superclass name ie User.staticMethodName()
+Static methods can't hide an instance methods - static means no state and you get a compiler error if you try this.
+Static methods cannot be overridden by instance methods and you also get a compiler error if you try this.
+
+The Object Class (java.lang.Object)
+Mother of all classes ie superclass of everything
+Why have an Object class?
+    acts as polymorphic type that allowed Java designers to create classes with methods of any type that never existed when they first wrote those classes
+    includes core methods that are inherited by every class since the Object class is the highest class. Some of these methods can be overriden and some are marked as final and cannot be overriden.
+
+Core methods
+     toString() - returns a string representation of the object
+     		- by default it includes the class name and a weird number 
+		- ALWAYS OVERIDE THE toString method - this method is very
+		useful in debugging
+		- toString() is automatically invoked when an object 
+		reference is passed to the System.out.println() statement - 
+		no need to invoke it explicitly, println() does it for you
+      hashCode() - returns object's hashcode (memory address in hexadecimal)
+      		 - used in hash table
+      equals(Object) - tests object equality
+      		     - by default, it uses == operator so you may want to
+		     overwrite it eg equals(Object user) { return this.id == 
+		     ((User) user).getId(); }
+      getClass() - final method that returns Class object which encapsulates
+      		 all the meta information about classname, superclass name, 
+		 methods...
+      clone() 	 - returns a copy of this object. Is a protected method and
+      		 must be overriden to use its functionality
+
+Constructor Chaining
+Motivation - we know that subclasses inherit methods from superclasses and those methods might depend on superclass state, that is the instance variables
+defined in the superclass. 
+So it means that superclass state should be initialized first. Otherwise, you may call on an inherited method which might not work as expected as the state in the superclass is not yet initialized.
+Thus a subclass state must be initialized after all its superclasses are initialized, including the Object class
+Constructors are used to initialize state, meaning that all the superclass constructors should run before the subclass constructor runs. This is what 
+constructor chaining does.
+When first creating an object it first runs the constructor code but due to constructor chaining, the first thing that an object does is to first invoke
+its constructor which in turns calls its own superclass constructor. This process continues until class Object's constructor is run.
+Constructor chaining every single time you create an object
+super keyword invokes a superclass constructor but we now use it followed by parentheses which may have zero or more parameters eg super();
+The important thing is that the super(); invokation statement call must the the first statement in the constructor UNLESS a this invokation statement is used (remember this() is to invoke overloaded constructors)
+A CONSTRUCTOR CAN HAVE this() OR super() BUT NEVER BOTH. Thus if there are multiple overloaded constructors, then the last invoked will call super
+-if not provided, the compiler will insert a super(); on top of the constructor
+
+If a superclass constructor cannot be invoked -> compiler error
+class User{
+      User(int id){
+      }
+}
+
+class Staff extends User{
+      Staff(int id){
+      }
+}
+
+Since both User and Staff classes already have constructors, the compiler will not insert the default no-args constructors in any of them so the above code will give a compiler error because the compiler will not be able to add a no-args super(); invokation statement within the Staff's constructor as there is no default constructor in the User class [User class' constructor asks for an int to be provided].
+This problem can be rectified by either adding a no-args constructor in the
+User class User() {} 
+OR adding a line in the Staff constructor:
+   Staff(int id){
+      super(id);
+   }
+The super(id); invokation statement will begin the constructor-chaining and be able to use the id as a parameter in the User constructor.
+
+Preventing Inheritence
+How can we prevent it? You want your class to be the final version. You do not want your methods to be overriden, you want them to work in the exact same way as you implemented them. You may not want any subclasses to be created as they may affect the semantics(invariants) of your class eg String, an immutable class which was designed that way by preventing inheritence altogether
+    MINIMIZE MUTABILITY OF CLASSES AS MUCH AS POSSIBLE
+2 Ways of preventing inheritence:
+  - final class
+  - private constructor
+
+    final ClassName{...} - class can never be extended, none of its methods can be overriden. final class is still instantiable eg String class
+The final keyword still allows instances to be created which helps in defining state as well as defining instance methods that can work on that state. String method can be used to initialize some text and there are some methods available to manipulate that text.
+
+    private Constructor - not extendible, not instantiable eg utility classes like Math. Saves heap space as it is meaningless to create instances when all the methods are static. Not extensible because the constructor cannot be invoked from the subclass thus there can be no constructor chaining and no subclass.
