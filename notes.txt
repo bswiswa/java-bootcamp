@@ -1825,10 +1825,318 @@ Preventing Inheritence
 How can we prevent it? You want your class to be the final version. You do not want your methods to be overriden, you want them to work in the exact same way as you implemented them. You may not want any subclasses to be created as they may affect the semantics(invariants) of your class eg String, an immutable class which was designed that way by preventing inheritence altogether
     MINIMIZE MUTABILITY OF CLASSES AS MUCH AS POSSIBLE
 2 Ways of preventing inheritence:
-  - final class
-  - private constructor
+  - final class INSTANTIABLE BUT NOT EXTENDABLE
+  - private constructor NOT INSTANTIABLE NOT EXTENDEBLE
 
     final ClassName{...} - class can never be extended, none of its methods can be overriden. final class is still instantiable eg String class
 The final keyword still allows instances to be created which helps in defining state as well as defining instance methods that can work on that state. String method can be used to initialize some text and there are some methods available to manipulate that text.
 
     private Constructor - not extendible, not instantiable eg utility classes like Math. Saves heap space as it is meaningless to create instances when all the methods are static. Not extensible because the constructor cannot be invoked from the subclass thus there can be no constructor chaining and no subclass.
+
+New Requirement: thrill.io for kids - add a new tab for bookmarks relevant to kids 
+Specifics:
+	- editorial staff must approve a bookmark as kid friendly
+	- if link IS kid friendly and needs approval it should have
+	 a "Mark as Kid Friendly" link
+	 
+				Bookmark
+			------------------
+				id
+				title
+				description
+				profileURL
+			- - - - - - - - - -
+			  generateProfileUrl()
+			  isKidFriendlyEligible()
+
+
+
+Weblink				Book				Movie
+-------------             ------------------             -------------------
+generateProfileUrl()	  publicationYear			releaseYear
+isKidFriendlyEligible()   publisher				cast
+			  authors				directors
+			  genre					genre
+			  - - - - - - - - - -	         - - - - - - - - - - 
+			  generateProfileUrl()		 generateProfileUrl()
+			  isKidFriendlyEligible()     isKidFriendlyEligible()
+
+
+Note that the bookmark superclass has the functions generateProfileUrl() and 
+isKidFriendlyEligible() even though they are overriden in the subclasses.
+the generateProfileUrl() generates the category of the bookmark eg movie/, link/ or book/ then for the rest of the Url, the method in the subclass is invoked to generate more specific and appropriate details
+the isKidFriendlyEligible() in the Bookmark superclass determines the base requirements to determine whether a bookmark could be kid friendly. However, the Bookmark class' method is too generic to go into the different details so each subclass then goes into more specific determinations by overriding the Bookmark class method. However, the method is still present because it helps in defining a contract in the subclasses, that is a common protocol for subclasses that is important for polymorphism
+
+Technical requirements
+- Bookmark should be non-instantiable. Too generic. All bookmarks should fall into one of the 3 subclass categories only [private constructor doesn't work because we need inheritence so we need somehting new]
+- better representation for isKidFriendlyEligible() within the Bookmark class - a way to indicate that the method is too abstract to have any implementation
+
+Abstract Classes & Methods
+Abstract class signifies abstractness - too generic to be instantiated but defines a common protocol for subclasses. NOT INSTANTIABLE BUT EXTENDABLE
+abstract class Bookmark{ ... }
+abstract method: abstract returnType functionName(); Note that an abstract method has no implementation thus no function body.
+an abstract method MUST be overriden thus it cannot be declared as static
+
+Abstract class has no use unless it is extended. [Abstract classes have constructors which are called in constructor-chaining, but no objects can be created out of them. If they did not have a constructor, they could not be extendable] It is the subclasses and their instances that are doing the real work at runtime.
+
+Cannot have an abstract method in a non-abstract class. However an abstract class can still have concrete methods. You can also have an abstract class without any abstract methods but that is not typical and is confusing.
+
+Abstract Subclass
+Need not override inherited abstract methods. Does not even need to redeclare them. Some other subclass would be expected to provide an implementation for abstract methods
+Like an abstract class, it can still define abstract and concrete methods. An abstract can override inherited methods whether or not the inherited method is abstract.
+
+Concrete Subclass
+Non-abstract classes MUST override all of the unimplemented abstract methods. Some of the abstract methods might have been implemented by one or more superclasses in inheritence tree. Only the others not implemented must be implemented.
+
+abstract class AbstractSuperClass{
+	 abstract void test1();
+	 abstract void test2();
+}
+
+abstract class AbstractSubClass extends AbstractSuperClass{
+	 //override
+	 void test1(){
+	      System.out.println("test1");
+	      }
+	abstract void test3();
+}
+
+public class ConcreteSubClassClass extends AbstractSubClass{
+       //override
+       void test2(){
+       	    System.out.println("test2");
+       }
+       
+       void test3(){
+       	    System.out.println("test3");
+       }
+
+       public static void main(String...args){
+       	      ConcreteSubClass concrete = new ConcreteSubClass();
+	      concrete.test1();
+	      concrete.test2();
+	      concrete.test3();
+	      //AbstractSubClass absub = new AbstractSubClass() // compilation error as abstract classes are non-instantiable
+	      //AbstractSuperClass ab = new AbstractSuperClass() // compilation error as abstract classes are non-instantiable
+       }
+}
+
+PREFER CLASS HIERARCHIES TO TAGGED CLASSES
+       	     		<<   abstract   >>
+                                Bookmark
+                        ------------------
+                                id
+                                title
+                                description
+                                profileURL
+                        - - - - - - - - - -
+                          generateProfileUrl()
+                          isKidFriendlyEligible()
+
+
+
+Weblink                         Book                            Movie
+-------------             ------------------             -------------------
+generateProfileUrl()      publicationYear                       releaseYear
+isKidFriendlyEligible()   publisher                             cast
+                          authors                               directors
+                          genre                                 genre
+                          - - - - - - - - - -            - - - - - - - - - -
+                          generateProfileUrl()           generateProfileUrl()
+                          isKidFriendlyEligible()     isKidFriendlyEligible()
+
+Tagged class
+Instead of having multiple subclasses with a set of shared fields inherited from superclass and more specific fields declared within the subclasses themselves, a tagged class has all the fields in it but determines which ones to instantiate and which ones to ignore during construction eg
+
+public class Bookmark{
+       private String title;
+       private String author;
+       private String directors;
+       private String bookmarkType; // tag field
+       
+       public Bookmark(String title, String author){
+       	      this.title = title;
+	      this.author = author;
+	      this.bookmarkType = "book";
+       }
+
+       public Bookmark(String title, String directors, String cast){
+        this.title = title;
+	this.directors = directors
+	this.cast = cast;
+	this.bookmarkType = "movie"
+       }
+
+       public void isKidFriendlyEligible(){
+              if(bookmarkType.equals("book")) { //code specific to book }
+	   else if(bookmarkType.equals("movie") { //code specific to  movie }
+        }
+}
+
+Tagged classes are verbose - multiple constructors, too many fields, too much
+logic in one single method. It is error prone as too many things are represented. Recall that classes should be designed with the single responsibility principle. It is also inefficient as any object regardless of its type will include some irrelevant fields and thus have a larger footprint eg a Book object will still allocate memory for the variables directors and cast.
+
+Tagged Class refactored to Class Heirarchy:
+       	     		   << abstract >>
+			   Bookmark
+        ------------------------------------------------
+			   title
+	-  - - - - - - - - - - - - - - - - - - - - - - -
+	<abstract method> isKidFriendlyEligible()
+
+	Book						Movie
+----------------				----------------------	
+  authors					    cast
+- - - - - - - - 				    directors
+isKidFriendlyEligible()			        - - - - - - - - - - - -
+						isKidFriendlyEligible()
+
+No more irrelevant fields and clearer. It now has better design and more flexible. eg if we wanted to add an Ebook type, we would have to add more code to our tagged class making it more complicated. With class hierarchy we would create another class Ebook which can be a subclass of Book. So we wouldn't have to change code in any of the superclasses but only in the new class itself.
+
+NEW REQUIREMENT FOR THRILL.IO
+Share kid-friendly Books and WebLinks with partner site goodsnips - sharing only kid-friendly Books or links
+Only editorial staff should be able to do this.
+We need to have a function getItemData() that returns the necessary information to goodsnips
+
+Technical requirement:
+	  define a common protocol for defining optional capability
+	   - define the same function only in Book & Weblink. The other 
+	   classes have nothing to do with it
+	  at the same time we also want a common protocol between them
+	  rather than have multiple versions which will further multiply
+	  as more class types could need that same functionality later.
+One way to achieve this is via Multiple Inheritence
+Multiple Inheritence & Diamond Problem
+You can have another superclass and have some subclasses extend multiple
+superclasses whilst others only extend one. In our case we could have another abstract superclass called Shareable which has our common protocol getItemData(). Book and Weblink classes would extend Shareable and still extend the original abstract class Bookmark.
+With this multiple inheritence we have our common protocol or contract specified by our superclass Shareable, then we have that protocol overidden only in the relevant classes
+However, in Java each subclass can extend only one superclass. Java doesn't support multiple inheritence. It does not support it because it can lead to the diamond problem (deadly diamond of death)
+
+	    	      	       Bookmark
+			   ---------------
+			   isKidFriendly()
+	Book						Movie
+---------------				   	------------------
+isKidFriendly()					 isKidFriendly()
+			MovieAndBook
+	  	----------------------------------------
+		which version of isKidFriendly() is here?
+
+The programming language will need to support some complicated programming
+rules to support this ambiguity. Java is designed to be simple so it avoids this problem by doing away with multiple inheritence completely. 
+Multiple diamond problem not only applies to methods but to shared state as well. Imagine if there is an extended instance variable i which has different integer values across the different classes. What is the state in MovieAndBook?
+
+So since Java doesn't support multiple inheritence, how can we solve the puzzle we have of having a common protocol for defining optional capability? ie have a getItemDate() in only Book & Weblink? 
+The answer is Interfaces.
+
+Interface
+An Interface is a reference type.
+Can never be an object type ie, non-instantiable. In that sense it is like an abstract class which can also never be an actual object. Note that the term
+type is often used to refer to a class or an interface
+Defining an Interface:
+	 public interface InterfaceName{ ... }
+just like a class, an interface can also have default access (available only to family members/same package classes)
+eg interface InterfaceName { ... }
+Thus classes and interfaces can only have either default or public access levelss
+An interface can include:
+   - static constant fields -> that is static fields declared with final modifiers eg static final int field
+   - abstract methods -> that is methods with no bodies
+   INTERFACES ARE MOSTLY ABOUT ABSTRACT METHODS. Prior to Java 8, an interface was considered as a 100% pure abstract class, that is it would include only abstract methods. Subclasses of an interface would override all abstract methods defined in an interface
+   - default methods - concrete method
+   - static methods - just like static methods we have for classes
+   - Nested types -> nested classes or nested interfaces
+IN GENERAL, IT IS MOSTLY ABSTRACT METHODS THAT YOU WILL SEE IN INTERFACES
+ALSO NOTE THAT ALL MEMBERS OF AN ABSTRACT CLASS ARE IMPLICITLY PUBLIC
+
+For our requirement of having a capability shared by the Book and Weblink class we can define an interface like so:
+    public interface Shareable {
+    String getItemData();
+}
+Note that by the default of the interface, the method is both public and abstract. That is why public and abstract modifiers were omitted above.
+All fields declared in the interface are by default public, static and final so the public, static and final modifiers do not have to be included explicitly. In fact, as a matter of style, it is discouraged to specify the default modifiers in the Interface.
+All interface members are public by default so you cannot use either private or protected modifiers with members. 
+If members are to have access only within the package, then the public modifier should be omitted in the interface declaration. In that case the public access of the interface would no longer apply and those members are not visible outside of the package. So basically the default public access of members in an interface is overriden by the default access level specified in the declaration
+Implementing Interface
+public class Book extends Bookmark implements Shareable{
+       public String getItemData(){ ... }
+}
+
+public class WebLink extends Bookmark implements Shareable {
+       public String getItemData() { ... }
+}
+
+for Interfaces we use the keyword "implements"
+The interface can also be used as a polymorphic reference type. Using the interface gives us the polymorphic benefits of multiple inheritence
+    Shareable obj = new Book();
+    Bookmark obj = new Book();
+
+A class can implement multiple interfaces
+eg public class Book extends Bookmark implements Shareable, Comparable {
+   	  public String getItemData(){ ... }
+	  public int compareTo(Object o) { ... }
+}
+
+An interface can also extend another interface
+public interface List extends Collection{
+...
+}
+Just like when subclasses extend superclasses, sub-interfaces also add some specialized behavior
+A class that implements a sub-interface has to implement all the abstract methods declared in both the sub-interface & the super-interfaces. It should be noted that a class can only implement an interface, it cannot extend it since an interace is non-instantiable. However, unlike classes, an interface can extend multiple interfaces eg public interface Train extends Commuting, ModesOfTransportation{ ... }
+If an abstract subclass implements an interface, it need not implement the abstract methods declared in the interface
+A class can implement multiple interfaces with the same abstract methods but we would not have the diamond of death problem because abstract methods are merely the outlines of the function declaration. The class itself is forced to decide how to implement and override these functions.
+
+Why fields are static & final
+    static?
+    - interfaces cannot be instantiated thus they cannot have instance variables so the fields have to be static and can be called by qualifying the field names with the interface name eg Shareable.homePage;
+    final?
+    - so we avoid the diamond problem that is caused by shared state
+    
+    Inheriting identically named variables from 2 different supertypes [remember that type can mean class or interface] -> in this case merely calling the field, in the subclass causes an error ie if we inherit a variable int VAL [implicitly static final constant if from interface] from two supertypes, we cannot just call it using the field name, we have to fully qualify it by calling it via the type name eg B.VAL [notice that VAL is all caps as it is a static final constant]
+
+Interfaces: A conceptural view. 
+When do you use an interface or an abstract class?
+The confusion: if an abstract class has only abstract methods, then it is no different from an interface. With Java 8, interfaces can now include concrete methods so they do not seem to be different from abstract classes. When do we use either one?
+In general interfaces can be classified into 2 types:
+   - representative interfaces
+   - mixins
+Representative interfaces
+- define behavior that exemplifies subclasses. That is the interface methods show the core functionality of subclasses. Such interfaces typically come with one or more implementations
+Mixins
+- define additional capability of subclasses. This is when subclasses have their own identity but they are announcing that they also support additional capabilities that the interface is defining eg the Shareable interface
+- very generic as subclasses can come from anywhere
+
+- IN GENERAL, even though interfaces can represent the core functionality of the subclasses, they are typically used to announce new capabilities via mixins
+
+eg public class Book extends Bookmark implements Shareable, Comparable, Cloneable{ ... }
+
+From a naming standpoint, Mixins typically end with the suffix -able
+
+PREFER INTERFACES TO ABSTRACT CLASSES
+interfaces are ideal for defining mixins. Mixins are capability add-ons and because of this, a class might want to support many of them. If we use an abstract class, then it cannot be extended by the classes that already extend another class. So if you use abstract classes as mixins, a subclass can only support at most ONE mixin but there are no limitations with interfaces
+- if the type is defining representative behavior but with no state involved, the mixins are better since interfaces are stateless
+THE KEY OF WHEN TO GO WITH INTERFACES IS WHEN YOU WOULD LIKE TO FACILITATE 
+MULTIPLE INHERITENCE
+
+WHEN SHOULD WE PREFER ABSTRACT CLASSES?
+When a class is defining the core identity of its subclasses that is representative behavior with state. We cannot use an interface as it is stateless
+Abstract classes can be used to provide a skeletal implementation of the interface - that is they would implement the interface and provide some form of basic implementation - programmers can extend this implementation for other uses. No need to reinvent some logic. Thus the abstract classes would implement an interface minimally and show some direction to a new programmer looking to use an interface.
+There is a naming convention that a skeletal implementation of an interface start with the prefix "Abstract-" followed by the name of the interface that is going to be skeletally implemented eg AbstractList which is an abstract class for the minimal implementation of the List interface
+
+USE UTMOST CARE WHEN DESIGNING INTERFACES
+If you are designing a public API, think long about the method signatures as it will be extremely difficult to change once released eg if you add any new abstract methods to the interface that is already used, then any code that used the package will no longer compile until that new method is implemented in all of the subclasses that implement it eg the List interface in the Java API is used and implemented by external libraries eg the ImmutableList in the Google Guava API and the TreeList in the Apache Commons API. If this interface is updated and includes new methods that would crash both external implementations until the new methods are implemented. However with abstract classes, if we add new concrete methods, they are automatically inherited by subclasses so we would not have this problem but now in Java 8 onwards, even interfaces permit the adding of concrete methods which also get automatically inherited however adding new abstract methods or changing signatures of abstract methods would still break the code of all implementors.
+
+REFER TO OBJECTS BY THEIR INTERFACES
+Whenever possible, try to use an interface as a reference type in all kinds of variable declarations and also use them as method return types.
+
+eg void foo(ArrayList list){ ... }
+   foo(new ArrayList()); the problem with this method signature is that we can only call it with an object of type ArrayList but can have no other implementation.
+But if we had the parameter type as a List, which is an interface, we could have in the future passed ArrayList, LinkedList or TreeList as parameters since they all implement the same List interface.
+Thus we can change implementations if needed as new implementations offer better performance
+Polymorphism benefits - flexible code, clean code
+
+Exceptions
+- if there is no interface at all, try to use the least specific class
+ - if we need specific subclass functionality in the code
+
+IF WE NEED TO DEFINE CORE BEHAVIOR OF ALL OUR CLASSES AND INCLUDE STATE AS WELL AND ONE CLASS IS GOOD ENOUGH -> ABSTRACT CLASS
+IF WE NEED TO ADD IN MORE CAPABILITIES TO CERTAIN AND NOT ALL CLASSES IN AN UNLIMITED WAY -> INTERFACE
