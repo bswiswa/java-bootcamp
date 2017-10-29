@@ -2196,3 +2196,18 @@ Declaration
 static
 - static methods in interfaces ARE NOT INHERITED since two superinterfaces can have the same static methods. Inheritence of static methods in classes is itself a design bug.
 - can be invoked only via interface name. No other way. Not even with sub-class. However, within the interface itself, default methods can directly call static methods. And static methods can call other static methods.
+
+
+MVC Architecture
+3 layer
+Model - holds business logic and has 2 layers - the service layer & Data access objects 
+View - front-end (Java Server Pages)
+Controller - servelets (Java Programs), separates model from the view. Controller and model have Java programs
+
+Advantage of MVC is the separation of business logic from presentation layer. Thus you can use the same business logic for requests coming from multiple types of devices
+Implementation Details
+-> we will implement both Model & Controller
+-> for view we will use View.java
+-> Database - Java class DataStore.java
+-> Entities -> classes like User, Bookmark, Book etc. They correspond to database table. Each instance is a row in the database.
+GET YOUR DESIGNS RIGHT TO AVOID REFACTORING LATER
