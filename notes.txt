@@ -2140,3 +2140,59 @@ Exceptions
 
 IF WE NEED TO DEFINE CORE BEHAVIOR OF ALL OUR CLASSES AND INCLUDE STATE AS WELL AND ONE CLASS IS GOOD ENOUGH -> ABSTRACT CLASS
 IF WE NEED TO ADD IN MORE CAPABILITIES TO CERTAIN AND NOT ALL CLASSES IN AN UNLIMITED WAY -> INTERFACE
+
+Marker interfaces
+Interfaces without any methods. Merely marks a class as having some property.
+Thus each class that implements a marker interface is announcing that it has a certain property defined by the marker interface. This property is explained in plain English in the javadoc of the marker interface. eg java.util.RandomAccess -> any class implementing this interface declares that it allows fast random access of its elements
+Another is the java.io.Serializable -> any class that implements this is declaring that it allows its objects to be serialized ie converted to bytestreams that can be saved to disks and can be deserialized (converted back to Java objects later)
+Cloneable marker interface from java.lang
+- by implementing cloneable, a class declares that the objects can return their exact copies.
+
+class CloneableClass implements Cloneable{
+      public CloneableClass clone(){
+      	     try{
+		return (CloneableClass) super.clone();
+		} catch (CloneNotSupportedException e){}
+	     return null;
+      }
+
+}
+
+Clone returned from the Object class' clone method is of type Object and so we need to typecast it to our appropriate class.
+Note that the clone() method in the Object class has protected access and hence can only be invoked in a subclass. You do not have to implement the Object class' clone method, you can implement your own.
+Clone method performs a shallow copy in order to generate the duplicate object - shallow copy implies that in generating the new object, the fields in the original object are not cloned. Their values are simply assigned to the new corresponding fields in the new object. Had the fields been cloned, this would be known as deep copy. So in shallow copy both the original object field and the generated clone's field would be referencing the same object. A problem can arise if that object is mutable. The value in both the clone and the original field would be affected. In deep copy, that is not an issue. But if the fields are all primitives (which get cloned by value to the new fields) or all immutable objects eg Strings, then shallow copy is not a problem.
+If you know that some of your fields are mutable during cloning, you can explicitly clone those internal mutable objects then return the new clone.
+
+default methods
+Before Java 8 - pain to evolve interfaces. Changes to API can easily break their code. 
+We could perhaps add new methods and implement them in the abstract classes but we cannot use abstract classes for multiple inheritence.
+This is where we use default methods. The main goal of the default methods are interface evolution with binary compatibility - clients of API should be able to use the old and the new methods without breaking their code. 
+Default methods cannot be final since we need to change their implementation in the subclasses. They are there only to provide minimal implementation of new abstract methods that the client may not have defined already.
+Default methods are also called defender/virtual extension methods
+Binary compatibility -> works without recompiling the code first
+Source compatibility -> works after recompiling
+Default methods are instance methods so you cannot invoke them using the interface name
+Any interface can never overwrite a method from an object
+Recap - use default modifier -> only can be used in the interface
+      - diamond problem can be avoided
+      	- classes over interfaces
+	- the more specific version is picked
+	- manual resolution
+Explicit invocation of a default method in a superinterface -> must use parent.super eg
+Default implementation can be re-abstracted in subinterface or abstract class if the implementation is not good enough
+Cannot use final or synchronized keywords with default methods
+default methods, other benefits:
+- interface evolution
+- default implementation that can be overridden
+- eliminate utility classes
+- allow interface to stay as functional interface -> these have exactly one abstract method
+
+NOTE THAT TO INVOKE A DEFAULT METHOD FROM WITHIN A SUBCLASS YOU HAVE TO USE superInterfaceName.super.defaultMethod(). It is not simply superInterfaceName.defaultMethod(). Note that you can only access the parent superinterface's default methods and not the grandparents' default methods 
+
+Having static methods with the interfaces helps to do away with companion classes and to just have the utility functions stay with the interfaces themselves eg
+instead of List s = new ArrayList(); s = Collections.sort(s); we can have the sort utility function be a static method of the List interface
+Interface evolution not affected
+Declaration
+static
+- static methods in interfaces ARE NOT INHERITED since two superinterfaces can have the same static methods. Inheritence of static methods in classes is itself a design bug.
+- can be invoked only via interface name. No other way. Not even with sub-class. However, within the interface itself, default methods can directly call static methods. And static methods can call other static methods.
