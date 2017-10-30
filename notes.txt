@@ -1795,9 +1795,9 @@ Constructors are used to initialize state, meaning that all the superclass const
 constructor chaining does.
 When first creating an object it first runs the constructor code but due to constructor chaining, the first thing that an object does is to first invoke
 its constructor which in turns calls its own superclass constructor. This process continues until class Object's constructor is run.
-Constructor chaining every single time you create an object
+Constructor chaining happens every single time you create an object
 super keyword invokes a superclass constructor but we now use it followed by parentheses which may have zero or more parameters eg super();
-The important thing is that the super(); invokation statement call must the the first statement in the constructor UNLESS a this invokation statement is used (remember this() is to invoke overloaded constructors)
+The important thing is that the super(); invocation statement call must the the first statement in the constructor UNLESS a this invocation statement is used (remember this() is to invoke overloaded constructors)
 A CONSTRUCTOR CAN HAVE this() OR super() BUT NEVER BOTH. Thus if there are multiple overloaded constructors, then the last invoked will call super
 -if not provided, the compiler will insert a super(); on top of the constructor
 
@@ -2211,3 +2211,70 @@ Implementation Details
 -> Database - Java class DataStore.java
 -> Entities -> classes like User, Bookmark, Book etc. They correspond to database table. Each instance is a row in the database.
 GET YOUR DESIGNS RIGHT TO AVOID REFACTORING LATER
+
+JVM Internals
+Understand the lifetime of a type inside JVM
+Runtime data areas - understand the different memory areas in JVM
+Anatomy of a class file - how bytecode instructions work
+JVM is the cornerstone of the Java platform. JVM is an abstract computing machine. 
+It has Java bytecode as its instruction set. It manipulates machine at runtime like a real computing machine.
+Core Responsibilities of JVM:
+- loading and interpreting bytecode
+- security
+- automatic memory management
+
+JVM is platform dependent but it excecutes platform independent Java bytecode. This is similar to interpretation but much faster because JVM interprets bytecode instead of source code.
+Specification & Implementation
+- abstract specification - high level description of its features and instruction set. Anyone can take the specification and implement their own JVM
+- concrete implementation of a JVM specification - popular implementations are Oracle's Hotspot JVM and IBM's JVM
+- runtime instance - instance of a concrete JVM implementation. When we run a Java program from the command line, a runtime instance of JVM is created and loaded into memory before that program can be run. JVM is allocated a chunk of memory which it then divides into different sections for its processing needs.
+
+Performance:
+- Bytecode interpretation is much faster than source code because bytecode has a compact format, is pre-compiled and already optimized
+- Just-in-time JIT compilation - caches frequently used bytecode in the form of machine code and when needed it excecutes the cached machine code to speed up performance
+
+Lifetime of a type
+Hello.class -> Load Class -> (Well formed?) -> no[REJECT]
+	       	    	     	   	    -> yes -> allocate space for static variables and initialize them with the default values
+					    -> load referenced classes -> initialize variables(ovewrite the previous default values with the actual user specified initial values from declarations or static initializer or instance initializer blocks)
+
+Loading is performed by a Class Loader -> searches classpath for the class. Once found, it loads the bytecode into memory and initializes the superclasses. After that, it generates a Class Object which is the output of the loading step. Class Object simply has the meta information about this class eg name, superclass names, method names etc. Class object is an instance of java.lang.Class.If the type is an interface, it will be loaded but not initialized. It will only be initialized if one of its static methods is initialized. Another time that an interface is initialized is when a field is accessed via an interface but the field is initialized via a method
+The Class object is created once when the corresponding class is accessed for the very first time. In subsequent accesses, JVM will load the Class object from memory. So the output of the loading step is the Class Object which is the input for the next step -> Linking
+
+Linking has 3 steps:
+1. Verification - a bytecode verifier checks if the input class is well formed or not [ this helps detect malicious classes ]
+2. Preparation - space is allocated for static variables and they are initialized with default values
+3. Resolution - load in classes referenced by the input class. These classes are loaded into memory dynamically - dynamic linking [NOTE THAT RESOLUTION IS AN OPTIONAL STEP - it can run after preparation or after the next step -> Variable initialization.
+
+Initialization
+Ovewrites the default values with the default user-defined initial values
+
+After initialization -> Excecution
+
+So the 3 stages in the lifetime of a type are Loading, Linking & Initialization
+
+Class Loading
+1. Whenever a class is accessed, the Class Loader checks if the corresponding Class Object is already on the heap. If so, it returns the Class Object and if not the class looks for the .class file using the Parent Delegation model. 
+If the .class file is found, the Class Loader loads the corresponding bytecode and creates a Class object and returns it. This Class Object is stored on the heap for future use.
+If the .class file is not found, then an exception called ClassNotFoundException is thrown
+
+The Parent Delegation search model is protocol and order in which Class Loaders look for a .class file. It starts at the topmost Bootstrap Class loader -> Extension Class Loader -> Application Class Loader -> User-Defined Class Loader. This is because JVM considers the classes at the top as more trustworthy(bootstrap class loader) than the ones at the bottom (User-defined Class Loader). 
+If class is found in one of the trustworth repository, then JVM doesn't perform the more stringent verification checks
+
+When is a Class Accessed and Loaded for the First Time?
+- when an instance of it is created via the "new" operator
+- it is loaded when one of its static methods or fields are called on. NOTE THAT ACCESSING COMPILE-TIME CONSTANTS WILL NOT LOAD A CLASS eg static final double PI = 3.14; MyClass.PI will not load the class because it is a compile time constant - values are known at compile time and they are copied and substituted wherever they are used - so there is no point loading the class here
+- if subclass is loaded (constructor chaining) or sub-interface is loaded
+- if it is run from the command line (entry point in its main method, which is a static method)
+- can also be loaded via Reflection (to be covered)
+
+Class Object
+- the output of the loading step.
+All the objects we create from a particular class are always done using the Class object of that class. It is not just Classes and Interfaces that have a Class Object. The Primitive types, void keyword and Arrays also have one. We will see later how the Class object of a primitive could be useful.
+- All arrays regardless of length have the same Class Object
+- Class object contains meta information about the class:
+  	String getName(); -> returns name of class
+	Class getSuperClass(); -> returns the supertype of the current Class -> thus returns Class object. If the current class is either Object class or an Interface or a primitive or void then null is returned as they do not have a superclass. If current class is an array then the Object class is returned
+	boolean isInterface();
+	Class[] getInterfaces(); -> returns all the interfaces implemented by the current class
+	ClassLoader getClassLoader(); -> returns the class loader that loaded this class
