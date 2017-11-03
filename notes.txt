@@ -2212,6 +2212,49 @@ Implementation Details
 -> Entities -> classes like User, Bookmark, Book etc. They correspond to database table. Each instance is a row in the database.
 GET YOUR DESIGNS RIGHT TO AVOID REFACTORING LATER
 
+
+JVM Internals
+It is helpful to understand the inner workings of JVM. Look at this example from this article:http://www.xyzws.com/javafaq/when-initialization-occurs-in-an-interface/123 
+When initialization occurs in an interface?
+According to Java language specification, initialization of an interface consists of executing the initializers for fields declared in the interface. Before a class is initialized, its direct superclass must be initialized, but interfaces implemented by the class need not be initialized. Similarly, the superinterfaces of an interface need not be initialized before the interface is initialized. Initialization of an interface does not, of itself, cause initialization of any of its superinterfaces.
+
+Here is an example listed in JLS. More detail information and example can find in 12.4 Initialization of Classes and Interfaces.
+
+interface I {
+        int i = 1, ii = Test.out("ii", 2);
+}
+interface J extends I {
+        int j = Test.out("j", 3), jj = Test.out("jj", 4);
+}
+interface K extends J {
+        int k = Test.out("k", 5);
+}
+class Test {
+        public static void main(String[] args) {
+                System.out.println(J.i);
+                System.out.println(K.j);
+        }
+        static int out(String s, int i) {
+                System.out.println(s + "=" + i);
+                return i;
+        }
+}
+produces the output:
+
+1
+j=3
+jj=4
+3
+The reference to J.i is to a field that is a compile-time constant; therefore, it does not cause I to be initialized. The reference to K.j is a reference to a field actually declared in interface J that is not a compile-time constant; this causes initialization of the fields of interface J, but not those of its superinterface I, nor those of interface K. Despite the fact that the name K is used to refer to field j of interface J, interface K is not initialized.
+
+System.out.println(J.i); // The i variable is inherited from I but since it is a constant - you don't have to go through the whole process of initializing I, just reference it and get on with things.
+System.out.println(K.j); // now this is more complicated. Since the variable holds something other than a constant, the first thing that we have to do is initialize J so that we can figure out what to DO to come up with the value of j.
+Initializing interface J causes variable j to be initialized first: executing Test.out("j",3) which prints j=3, and setting the variable j to 3 (note the return type on the method). Now jj is initialized executing Test.out("jj",4) which prints jj=4 and sets the variable jj to 4.
+Now that initialization is done we can evaluate and execute the println for K.j which prints the current value of j which is 3.
+
+
+
+
 JVM Internals
 Understand the lifetime of a type inside JVM
 Runtime data areas - understand the different memory areas in JVM
@@ -2234,11 +2277,11 @@ Performance:
 - Just-in-time JIT compilation - caches frequently used bytecode in the form of machine code and when needed it excecutes the cached machine code to speed up performance
 
 Lifetime of a type
-Hello.class -> Load Class -> (Well formed?) -> no[REJECT]
+Hello.class -> Class Loader -> (Well formed?) -> no[REJECT]
 	       	    	     	   	    -> yes -> allocate space for static variables and initialize them with the default values
 					    -> load referenced classes -> initialize variables(ovewrite the previous default values with the actual user specified initial values from declarations or static initializer or instance initializer blocks)
 
-Loading is performed by a Class Loader -> searches classpath for the class. Once found, it loads the bytecode into memory and initializes the superclasses. After that, it generates a Class Object which is the output of the loading step. Class Object simply has the meta information about this class eg name, superclass names, method names etc. Class object is an instance of java.lang.Class.If the type is an interface, it will be loaded but not initialized. It will only be initialized if one of its static methods is initialized. Another time that an interface is initialized is when a field is accessed via an interface but the field is initialized via a method
+Loading is performed by a Class Loader -> searches classpath for the class. Once found, it loads the bytecode into memory and initializes the superclasses. After that, it generates a Class Object which is the output of the loading step. Class Object simply has the meta information about this class eg name, superclass names, method names etc. Class object is an instance of java.lang.Class.If the type is an interface, it will be loaded but not initialized. It will only be initialized if one of its static methods is initialized. Another time that an interface is initialized is when a field is initialized  via a method
 The Class object is created once when the corresponding class is accessed for the very first time. In subsequent accesses, JVM will load the Class object from memory. So the output of the loading step is the Class Object which is the input for the next step -> Linking
 
 Linking has 3 steps:
@@ -2263,7 +2306,7 @@ If class is found in one of the trustworth repository, then JVM doesn't perform 
 
 When is a Class Accessed and Loaded for the First Time?
 - when an instance of it is created via the "new" operator
-- it is loaded when one of its static methods or fields are called on. NOTE THAT ACCESSING COMPILE-TIME CONSTANTS WILL NOT LOAD A CLASS eg static final double PI = 3.14; MyClass.PI will not load the class because it is a compile time constant - values are known at compile time and they are copied and substituted wherever they are used - so there is no point loading the class here
+- it is loaded when one of its static methods or fields are called on. NOTE THAT ACCESSING COMPILE-TIME CONSTANTS WILL NOT LOAD A CLASS eg static final double PI = 3.14; MyClass.PI will not load the class because it is a compile time constant - values are known at compile time and they are already copied and substituted wherever they are used - so there is no point loading the class here
 - if subclass is loaded (constructor chaining) or sub-interface is loaded
 - if it is run from the command line (entry point in its main method, which is a static method)
 - can also be loaded via Reflection (to be covered)
@@ -2271,10 +2314,187 @@ When is a Class Accessed and Loaded for the First Time?
 Class Object
 - the output of the loading step.
 All the objects we create from a particular class are always done using the Class object of that class. It is not just Classes and Interfaces that have a Class Object. The Primitive types, void keyword and Arrays also have one. We will see later how the Class object of a primitive could be useful.
-- All arrays regardless of length have the same Class Object
+- All arrays of the same dimension regardless of length have the same Class Object eg all 1D arrays have same Class Object
 - Class object contains meta information about the class:
   	String getName(); -> returns name of class
 	Class getSuperClass(); -> returns the supertype of the current Class -> thus returns Class object. If the current class is either Object class or an Interface or a primitive or void then null is returned as they do not have a superclass. If current class is an array then the Object class is returned
 	boolean isInterface();
 	Class[] getInterfaces(); -> returns all the interfaces implemented by the current class
 	ClassLoader getClassLoader(); -> returns the class loader that loaded this class
+
+Linking
+Is the most complicated of the lifetime of a type. Has 3 stages - verification, preparation and resolution
+Verification
+- checks that the loaded class conforms to Java language rules. This is necessary as the class file might have been loaded across the network or it could be a user defined class from the local machine. In both cases JVM does not trust those classes as they come from less trustworthy resources eg they could have been generated by a hostile compiler intending to perform some malicious actions. Thus JVM subjects them through some stringent verification checks although the same verification is already done during compilation. Classes from the Java library are not verified as they are considered trustworthy -> they are loaded by the Bootstrap ClassLoader
+- bytecode verification is done by the Java Bytecode Verifier and only after this is the code considered safe by JVM. If the verifier finds a problem, it rejects the malformed class and throws an exception.
+Some verification checks:
+     - final classes must not have subclasses
+     - final methods must not be overridden
+     - no illegal method overloading
+     - bytecode integrity - methods expected to return values always do so before closing
+
+Preparation
+-starts off straightforward:
+	- allocate space for static fields and initialize them with default values
+	- if there is no memory throw an OutOfMemoryError
+	- fill static fields with the user-defined values
+	- Instance Creation then initialize instance fields and give them default values. This happens for all classes - static fields of all classes will be initialized before the first instance field is initialized with default values in a superclass.
+
+Resolution
+- fields and methods from other classes and/or interfaces are loaded so that the current class can use them. Such references are called symbolic references. All symbolic references are stored in one area of the .class file called the constant pool which also includes compile-time constants & string literals
+- need not strictly happen after preparation step. Can be performed later after initialization step
+- referenced classes are loaded into memory here and their corresponding symbolic references within the current class will be replaced with direct references to their actual locations in the memory. 
+
+When this linking is done at runtime, it is called dynamic linking. Linking at compile time is called static linking. In static linking, the contents of the reference file are copied into the final executable. The advantage of dynamic linking is that you can make easy updates that is you can replace a class file with a more newer classfile. However, the software would cease to work if updates are incompatible eg a method previously referred to by the current class might be missing. The resolution of symbolic references in the current class happens only once. The symbolic reference might be referenced from multiple locations within the same class but that reference will be resolved only once and thereafter the direct reference is used.
+
+Dynamic linking
+Can happen in 2 ways depending on JVM implementation. It can be either via:
+- Eager loading - means that resolution happens right after preparation step - means all classes referenced by current class will also be loaded, meaning that they get loaded and initialized before the current class itself is initialized.
+- Lazy loading - resolution is postponed till after initialization - till the statement that includes the reference is actually executed (on-demand). Typically JVMs implement lazy loading because you don't have to load a class until you really need it. Sometimes certain statements may never get executed and so there is no point loading the references appearing in those statements.
+
+Resolution checks:
+- permission - ensure that current class has permission to access the referenced class
+- correctness - ensure that the fields exist in those classes with the right type and the current class has the permission to access those fields
+
+Once a class is found to be safe, initialization can begin -> initialize static fields with actual default user values.
+Note that Interface initialization only occurs when a static method is accessed or one of its fields that is a non-compile time constant is accessed -> that is it is initialized via a method or a constructor.
+
+
+
+Reflection
+There are 3 ways to access a Class object
+1. via ObjectRef.getClass()
+2. Class.forName(String className)
+3. Class literals
+
+1. Using Object reference
+Class c = "foo".getClass(); -> returns Class for String
+Set set = new HashSet();
+c = set.getClass(); -> c is set to the Class for HashSet
+
+2. Using Class.forName(String className) -> static method in Class class
+   - argument is fully-qualified class name
+   - doesn't work with primitives
+   - Examples: Class.forName("java.lang.String")
+     	       Class.forName("[D"); -> Array of primitive double
+
+3. Appending .class to type name
+   - works with classes, interfaces, arrays and primitives
+   eg String.class, boolean.class, int[][][].class, void.class
+
+Special case: Boxed primitives have a TYPE field. Accessing this field returns a Class object of that primitive
+There is a class called Void in the java.lang package. This Void class also has a field called TYPE. Accessing this returns the Class object for the void class. Note that the void class is non-instantiable as it has a private constructor.
+In general using .class is preferred over using the type field
+
+Runtime data areas
+The operating system allocates memory for all given processes when they start running. This memory is called native memory. Process will also have its own virtual address space which maps to physical memory or any file or addressable storage. 
+This virtual address space will have 2 parts - user space and kernel space.
+Kernel space is where the kernel resides and this space is shared by all the processes. The user space however is unique to each process and that is the native memory too where the user programs are stored.
+On a 32 bit Windows machine, by default a process gets 2GB of user space and 2GB of kernel space.
+Book recommendation: Operating System Concepts, Peter Galvin, Greg Gagne (9th edition)
+JVM as a process also gets its own native memory which it splits into multiple subareas
+JVM User Space
+User space = Native Heap + Java Heap
+Java Heap stores Java objects. Setting an appropriate Java Heap size is important for good performance. 
+Method area contains Class data eg superclass name and actual bytecode of the class. Multiple objects of the same class will point to the same method area. 
+The Native heap stores code that is compiled by the Just-in-time compiler which is tored to speed up future performance. Native heap can also have special objects called direct buffers which are useful when caching lots of data.
+The Java heap and the method area are shared across threads during multitasking. However there are certain areas of memory that must be specific to each thread eg stack.
+JVM Stack includes the order of invocation of methods (method invocation state). It also includes information about local variables within each method.
+There is a separate stack for native methods. Sometimes JVM might invoke methods in native code which could be applications written in native compile languages eg C and C++.
+JVM relies heavily on native code to do tasks like input/output.
+Another section of the User space is the Program Counter. It holds the memory address of the next instruction meaning that it is a pointer to a method in the method area where the bytecode is.
+Each thread has its own JVM stack, Program Counter(PC) and native method stack 
+
+Method Area & Heap
+What goes into method area and how it is connected to heap
+Objects are stored on heap -> when we talk of objects we are mostly talking about the instance data inside those objects. JVM allocates space for an object based on the number and type of its instance variables. 
+Objects also contain behavior which are methods. But methods are something that is more specific to the class that the objects belong in so they would be part of class data. Any class data is stored in the method area. Class data also includes meta-data like field names and field type.
+Method area is all about classes while heap is about objects. 
+When creating an instance of a class. The class loader will check if the class object is already present on the heap and if not, it creates a Class object on the heap and stores the class data in the method area. JVM would also create a new instance of that class and store it on the heap. If a new object of the same class is created, then only the object is created and stored on the heap. The class loader will know that the class object and class data have already been created and so it does not create them again.
+As program execution continues, more things are added to the heap and method area. Pointers (unidirectional and bidirectional) go back and forth between the heap and method areas.
+Method area (class data store):
+- meta info - eg names of type, superclass, super interfaces, class or interface, access modifiers eg abstract, final, abstract. Such meta information is accessible through the class object so that means that the Class object internally uses the data stored in the method area.
+Class data and the Class object have a bidirectional link. This is important eg during class loading, the class loader first checks if the class object for the type is already on heap. For that it may search the method area to see if class data for that type exists and if it does exist, it would then return the reference to the class object.
+Classes include fields like static and instance variables so class data would include information like field name & type; modifiers: static, final, access modifiers, transient [related to serialization], volatile [related to multithreading]
+If the field is an instance variable with primitive data type, it is stored on the heap but if the field is a static variable, with a primitive data type, then the method will be stored on the method area.
+If a field regardless of whether it is an instance variable or static references an object, the object will still be on the heap, but the reference itself which is the memory address of the object will be stored in the method area in the case of static variables. For instance variables it would be assumed to be on heap.
+Class data will also include the runtime constant pool - this is a runtime version of the constant pool as seen in the .class file. It includes constants like String literals or primitive value constants. Can also include symbolic references(processed in the resolution step of a type).
+Classes also store method information eg name, return type, number and type of parameters, modifiers, method bytecode.
+Method area also contains method table, which is an array of references to instance methods (not static methods). Each reference is a pointer to actual bytecode. The method table is used during method invocation, that is when a method is invoked on an object, then the method table is used to find the method code that needs to be executed. This is one reason for having pointer from the object heap, to the class data - when you invoke a method on an object, JVM will follow the pointer from the object to the class data and use the me†hod table to find and execute the target method.
+Method table also contains references to methods inherited from superclasses.
+Method area used to be allocated in the PermGen space (permanent generation space). Removed completely in Java 8. Method area moved to native heap and is now known as metaspace. The reason for this was that for PermGen there is a default maximum size set and if this maximum is reached, an out of memory error would be generated. Now with metaspace, there is now default max size and the OutOfMemoryError is less likely. Metaspace also improves the performance of garbage collection process.
+Runtime Type Information (RTTI)
+- invoke method code in method area
+- check correction of cast
+  	Superclass obj = new Subclass();
+	Subclass subObj = (Subclass)obj; // RTTI used here
+- RTTI also used to perform instanceof checks
+       subObj instanceof Subclass
+
+Method Table
+Basically an array references to instance methods.
+Static methods are statically bound. At compile-time, the address of the method is already known and so the runtime constant pool would have a reference to the static method.
+In summary method tables include only references to instance methods. Only concrete classes have method tables. Abstract methods do not have them because they cannot be instantiated.
+
+Garbage Collection
+There is a need to reclaim memory when objects are no longer requiered. Taken care of by the garbage collector. We will look at the heap area and how Java manages this area.
+In C/C++ the programmer has to explicitly allocate & free memory. This helps create efficient applications. This gets risky in larger projects.
+Memory corruption errors:
+- memory leak - when unused objects are never freed. eg if a new object reference is assigned a reference of an object that was not freed. Eventually, you will run out of memory and the program will not work. 
+Memory leaks are not as bad for short-running programs but for long ones like web browsing it can be very serious
+- dangling reference - reference to deallocated location. If memory location is pointed to by 2 references, and one of them frees it and/or gives a new value, then the previous pointer to it is still there but the second pointer will not behave in an unusual manner.
+
+Java uses automatic memory management. Done through garbage collection using a Garbage Collector. 
+The Garbage Collector reclaims dead objects so there are no memory leaks.
+GC needs to make sure that an object is really dead and there are no active references to it otherwise we can end up with a dangling reference.
+If an object is not referenced anymore, it is reagarded as an abandoned project.
+An object is also considered abandoned when:
+   -it goes out of scope eg void go() { Book b = new Book(); return; }. here object b is considered abandonded after excecuting this method.
+   - if reference is assigned another value or if null is assigned to its reference.
+GC may be implemented or as an add-on. Runs in background. Programmers have limited control over when it will run. It is usually triggered when there is little memory.
+   - you can make JVM run GC by either System.gc() or Runtime.getRuntime().gc() --> note that these are only hints and JVM can choose not to run.
+Garbage Collector Algorithms
+GC challenges?
+- how do you identify abandoned objects?
+- how do you reduce pause time?
+
+Identifying & reclaiming dead objects
+- Mark & sweep - find and mark live objects. Sweep would go through and identify the unmarked objects and release them. But during sweep phase, if new objects are created, they may also be initially unreachable and may be wrongfully freed. Thus we need to pause the application and sweep. Note that freeing has to be carefully not to fragment data. The solution to this is another algorithm known as Mark-Sweep-Compact. 
+In the Mark-Sweep-Compact algorithm, there is an additional compacting which moves all the live objects to the beginning of the memory region thus doing away with fragmentation and there is a greater chance of successfully storing large objects. 
+The problem with MSC is that there would be a significant pause time as objects are moved and also updating corresponding references as their objects are now in different locations in memory.
+There is also a third algorithm which is the Mark And Copy. It maintains a separate memory location free so that after sweeping, all live objects are relocated to the empty location. This also prevents fragmentation but an added advantage is that the copy phase can happen simultaneously with the mark phase - that is as objects are being marked, they can be moved to the second region. Due to this the application pause time is shorter.
+
+Generational collection
+Helps stop application pauses. Lots of objects are created but most die young. However there are some long living objects that GC will check on many times unnecessarily. We can divide memory into 2 buckets - one to store long lifespan objects and another for short lifespan objects. This allows GC to focus on cleaning the short life objects.
+this is the generational collection approach - heap is split into 2 generations/groups in memory - young and old(tenured) generation. 
+Young generation contains recently created objects and gc mostly focuses on this group. The objects that last in young generation are promoted into the old generation. 
+The old generation is still subjected to gc but less frequently
+Young generation has further divisions called eden and survivor( has 2 regions - to and from). Initially created objects are in eden and gc monitors them. Surviving ones are moved to the to survivor group. When garbage collection is finished, eden is empty and the to objects are moved to from.
+Dead objects can still be found even in the survivor space of the young generation. 
+By default, JVM moves an object from young to old generation after 15 gc cycles. This option can be adjusted through an option given to JVM on the command prompt.
+Generational collection is used to reduce pause times. Garbage collection can also use multithreading to further reduce pause times
+Types of Garbage Collection - CMS, Parallel GC and Serial GC. All use Mark and copy in the young generation. For old generation Serial and Parallel use Mark-Sweep-Compact whilst CMS mostly uses Concurrent Mark-Sweep. New collector called G1
+
+ELIMINATE OBSOLETE OBJECT REFERENCES - to avoid memory leaks.
+
+Memory leaks -> increased memory footprint -> increased garbage collection activity -> performance degradation -> WORST CASE (no memory error)
+
+Stack
+All information about methods getting invoked and also about local variables will be stored on stack.
+Last in first out data structure. One stack per thread. Each method call creates a method frame which is pushed into stack. 
+If an object reference is on the stack, the object it references will be on the heap
+Stack Frame Contents
+- contains local variables, operand stack and a reference to the runtime constant pool to the class of the local method
+Operand stack - similar to registers in CPU. Stores returned values by invoked methods
+Local variables are stored in an array and the results are added to this array until the final value is stored at the back of the array. This final result is the return value.
+
+eg int y = 1; 	    	      	       	   iconst_1    //integer value of 1
+   int z = 3;				   istore_1  //store in position 1
+   int x = y + z;			   iconst_3  // integer 3
+					   istore_2  // store in position 2
+					   iload_1   // get position 1 value
+					   iload_2 // get position 2 value
+					   iadd
+					   istore_3 // store result in position 3 and return
+
+index 0 in this case is researved for the method parameter. If the code was in a function that did not have method parameters, it would be istore_0 eg.
