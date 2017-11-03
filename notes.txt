@@ -2432,7 +2432,7 @@ Runtime Type Information (RTTI)
        subObj instanceof Subclass
 
 Method Table
-Basically an array references to instance methods.
+Basically an array of references to instance methods.
 Static methods are statically bound. At compile-time, the address of the method is already known and so the runtime constant pool would have a reference to the static method.
 In summary method tables include only references to instance methods. Only concrete classes have method tables. Abstract methods do not have them because they cannot be instantiated.
 
@@ -2498,3 +2498,71 @@ eg int y = 1; 	    	      	       	   iconst_1    //integer value of 1
 					   istore_3 // store result in position 3 and return
 
 index 0 in this case is researved for the method parameter. If the code was in a function that did not have method parameters, it would be istore_0 eg.
+
+Instruction Set
+JVM has an instruction set -> a method's bytecode instructions
+Bytecode instructions have similar structure to machine code. Each instruction involves a 1 byte opcode followed by operands
+opcode -> operation to be performed eg iadd, iload_1
+operands -> additional information
+
+Like CPU, JVM's excecution engine follows the fetch-and-execute cycle. That is, JVM fetches an opcode and then any trailing operands for that opcodes. Then it executes that operation after which it if fetches the next instruction and so on.
+
+javap Disassembler
+Disassembles 1 or more class files.
+javap -c
+-c flag prints method bytecode
+javap -v OR javap -verbose
+-v flag prints method bytecode and constant pool
+-help flag shows all options
+
+eg javap -v Hello.class
+
+invokespecial:
+- is run for all instance initialization methods, private methods & superclass methods via super keyword.
+- the instance initialization method is referenced using a special keyword called <init>
+1. peforms method resolution -> replacing symbolic references with direct references
+2. creates stack frame for method on stack
+3. pops the this reference stack element & store it at index 0 in local variables array -> The zeroth element in the local variables array is a always a reference to the current object. Each variable is first loaded onto the stack then popped into the local variables array when it is time for it to be used
+4. set program counter (pc) to the first instruction in the instance initialization method
+
+invokevirtual:
+- discussed in method binding section of Inheritence & Polymorphism chapter
+- for instance methods, method signature binding happens at compile time itself but the method implementation binding happens only at run time. This is because with instance methods, we do not know which method to run until run time ie it is dependent on the object in context.
+When JVM encounters invokevirtual:
+1. performs method resolution -> points to index of method in method table of object class
+2. method implementation lookup: JVM goes from objectReference -> actual object on heap -> method table[index] (goes to the index of the method refered to by the actual object]. At this point, JVM now knows the method to be executed.
+3. create stack frame for method on stack
+4. pop stack element and store it at index 0 in local variable array
+5. set pc to first instruction in method
+
+Constant pool
+Contains symbolic references to methods eg #1 = Methodref, classes eg #9 = Class, method descriptors eg ()V -> includes method parameters and the return type (no parameters in this case and  return type is V for void)
+
+System.out.println("Hello");
+- System is a class 
+- out is a static variable defined in the System class
+- out is of type PrintStream from the java.io package
+- the println() method is invoked on the out static variable
+
+aload:
+- implies that we are loading an object. If an integer for example it is iload
+so we need to store the out variable in the operands stack. This is done by the getstatic instruction.
+getstatic:
+- get and push static field value onto operand stack
+ldc:
+- gets the value of a constant from the constant pool and pushes it onto the operand stack
+invokevirtual: 
+- pops operands and invokes the method
+areturn:
+-implies that we are returning an object reference. Primitive types have their variations eg ireturn for integers
+
+invokeinterface instruction is also available.
+ 
+Exceptions
+We all want programs to be as error free as possible. But at runtime we will encounter exceptions eg partner server is down or our database is down. These events are not in our control but we must write code to account for these situations eg write code to automatically connect to another server if partner server is down.
+This leads to robust software otherwise the code can be very fragile and will bring trouble to the organization and the programmer.
+
+Agenda:
+- Exceptions
+- Exception Handling
+- Assertions
