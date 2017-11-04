@@ -2803,3 +2803,72 @@ JUST HAVING -da BY ITSELF HAS NO EFFECT AS ASSERTIONS ARE DISABLED BY DEFAULT
 To enable assertions using Eclipse:
 1. Make sure you are in the file with the main method
 2. Run -> Run As -> Arguments -> Enter "-ea" (or other forms of it) in the VM arguments section -> Click Apply -> Run
+
+Input/Output
+Java comes with 2 I/O packages:
+- java.io - also called StreamIO
+- java.nio - new IO (since Java 4)
+
+Steam IO has 2 sets of packages: Byte Streams and Character Streams
+Character Encoding
+Fundamentally all files are binary. All files look alike to hardware. However, software can make a distinction thus certain software handles certain files eg text editors for .txt and Paint for .jpg
+Computers use hexadecimal numbers to represent characters eg 'a' -> 61(hex) -> 01100001
+A single byte can be any of 256 patterns (2^8). To represent more characters, more bytes are needed and that is where encoding schemes come from.
+Every file uses some encoding scheme to represent its characters. An encoding scheme is an algorithm which maps characters to a hexadecimal number whose binary is saved
+
+character <---> hexadeximal <--> binary
+Encoding: 'a' --> 61 (hex) --> 01100001
+Decoding: 01100001 --> 61 --> 'a'
+
+Examples: ASCII, UTF-16, UTF-32
+Variations in encoding algorithms led to decoding issues
+Advent of internet made it worse. That is when the Unicode character set was invented
+
+Unicode
+Maintained by Unicode Consortium.
+Backward compatible with 7-bit ASCII
+Initial assumption:
+- 16 bits for 65536 chars would suffice - Basic Multilingual Plane (BMP)
+- the used exactly 16 bits to represent any character
+But it was realized that there were more characters thus other encoding schemes were
+created eg UCS-4, UTF-32
+According to Wikipedia, Unicode covers 120 000 characters from 129 scripts
+Unicode character set has 2 parts - BMP and Supplementary characters(Non-BMP)
+BMP has 65 536 characters whilst non-BMP has around 55 000 characters. The hexadecimal code that represents each character is called a code point.
+To represent a single BMP character, one 16 bit code point is used. To represent a non-BMP character, two 16-bit code points are used.
+BMP codes range from U+0000 to U+FFFF
+Non-BMP codes range from U+10000 to U+10FFFF
+
+UTF-16 and UTF-8 are popular implementations of Unicode. UTF stands for Unicode Transformation Format
+UTF-16:
+-Variable length eg BMP: 2 bytes, Non-BMP: 4 bytes
+-BMP Codes -> 1-1 correspondence
+-Non-BMP Codes -> Surrogate pairs (higher and lower) eg \U1F602 == D83D DE02
+-Used by Java, C#, Python etc
+
+UTF-8
+-Variable length
+	  ASCII chars (0-127): 1 byte
+	  Others: 2 - 4 bytes
+	  Non-BMP: 4 bytes
+-favored for English since it only needs one byte for each character whereas UTF-16 uses 2
+-most popular. Half of web uses it
+-designed by Ken Thomson, the creator Unix and B programming language (B is the direct predecessor to C language)
+
+Endianness
+In UTF-16, since the basic unit is 2 bytes, there can be 2 ways in which those bytes are stored in memory:
+Big Endian (BE) - most significant byte (MSB) stored at lowest memory address (this is the most common format and the default one too)
+Low Endien (LE) - MSB stored at highest memory address 
+
+Byte Order Mark(BOM). Used to identify if the encoding is Big Endian or Low Endien. For that it uses a special unicode character
+- BE ~ FEFF
+- LE ~ FFFE
+
+These byte order marks are placed at the beginning of a data stream and that would tell if the data stream is big endian or low endian.
+eg data stream for "Hello" is as follows:
+"Hello" -> 0048 0065 006C 006C 006F
+BE -> FEFF 0048	0065 006C 006C 006F
+LE -> FFFE 0048	0065 006C 006C 006F
+
+Always decode using same or compatible encoding scheme
+Databases generally do not accept storing of non-BMP characters and will throw an error when this happens.
