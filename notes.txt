@@ -2872,3 +2872,220 @@ LE -> FFFE 0048	0065 006C 006C 006F
 
 Always decode using same or compatible encoding scheme
 Databases generally do not accept storing of non-BMP characters and will throw an error when this happens.
+
+Stream IO
+Stream is a connection to a data source/storage. Stream can be input/output
+Stream operations
+1. open stream
+2. read/write
+3. close stream
+
+Closing stream frees up the resources that the stream is using and avoids resource leaks. Operating systems have limits to the number of sockets or file handles that can be run simultaneously.
+Standard template for IO
+
+FileInputStream in = null;
+try{
+	in = new FileInputStream(filename); // open stream
+   	//read data
+   } catch(FileNotFoundException e){
+     ...
+   } finally{
+	try{
+	    if(in != null)
+	    	  in.close();
+	  }catch(IOException e{ ... }
+   
+}
+
+We can use the try with resources block
+try(FileInputStream in = new FileInputStream(filename)){
+   //Read data
+}catch(FileNotFoundException e){
+ ...
+}catch(IOException e){
+ ...
+}
+
+close() method is handled implicitly. Compiler implicitly adds the finally{...} block. Note that in the try-with-resources block, the variable in is final and also that the class FileInputStream must implement java.lang.AutoCloseable interface. This feature is referred to as Automatic Resource Management (ARM).
+
+We can also have multiple resources being created:
+try(FileInputStream in = new FileInputStream(filename);
+    FileOutputStream out = new FileOutputStream(filename)){
+    //read data
+} catch(FileNotFoundException e){
+  ...
+} catch(IOException e){
+  ...
+}
+
+Streams Classification
+Streams are of 2 types: Byte streams or Character Streams
+	       	 	     Object
+InputStream 	OutputStream	|	Reader		Writer
+	Byte Streams		|		Character Streams
+
+The reason for having these 2 types of streams is because Java differentiates between processing characters and everything else.
+
+Byte Streams
+-read/write raw bytes serially
+-character streams are built on top of byte streams
+InputStream
+- Base abstract class for all byte input streams
+- reads data in groups of 8 bits (1 byte)
+eg abstract int read() throws IOException 
+   - this function reads 1 byte and returns as int between 0 & 255 (2^8-1)
+   - returns -1 if end of stream is detected
+   eg for 'a' read() would return 97
+Read Operation - is when we are reading groups of bytes
+     int read(byte[] b, int offset, int length) throws IOException
+     	 - a byte array is passed to this method and it will read up to length number bytes into the array starting at the offset
+	 - if number of bytes that can be read is less than length, then those will be returned
+	 - method returns the total number of bytes read or -1 if end-of-stream detected
+	 -internally, it repeatedly invokes the read() method implemented by the subclass(remember that the read() method from InputStream is abstract)
+
+another read method int read(byte[] b) throws IOException -> this method calls the previous read(byte[] b, int offset, int length) with offset = 0, length = b.length
+Note that all read calls would block when no data is available ie if no data is available, the method will wait until the data becomes available. For example, if we are reading data on the network and the other end is not sending data. In this case the method will block.
+
+OutputStream 
+- base abstract class for all byte output streams
+- used to write data in groups of 8-bits (1 byte each)
+- abstract void write(int) throws IOException
+-Notice that the input parameter is an int which has 32 bits. But this method needs to write only on byte so it writes the least significant byte -> rightmost 8 bits. The other 24 will be discarded.
+second version of write void write(byte[] b, int offset, int length) throws IOException
+- write length number of bytes from array starting at offset.
+- internally repeatedly invokes write()
+
+third version:
+      void write(byte[] b) throws IOException -> calls write(byte[] b, int offset, int length) with offset = 0 and length = b.length
+
+InputStream Hierarchy
+				____________
+				|InputStream|
+				-------------
+ByteArrayInputStream		FileInputStream			PipedInputStream
+		FilterInputStream		ObjectInputStream
+BufferedInputStream	DataInputStream
+
+OutputStream Hierarchy
+				---------------
+				| OutputStream |
+				---------------
+ByteArrayOutputStream		FileOutputStream		PipedOutputStream
+		FilterOutputStream	       ObjectOutputStream
+BufferedOutputStream	DataOutputStream
+		PrintStream
+
+Reading Byte-Oriented Files Efficiently
+- these are files containing non-textual data like images
+- the FileInputStream and FileOutputStream classes provide implementation of the read and write methods.
+- creating a FileOutputStream:
+  	   FileOutputStream(String filename) throws FileNotFoundException
+-this creates a new file if file does not exist. If file exists, it will overwrite it
+- FileInputStream does not create a new file if it does not exist - constructor will throw a FileNotFoundException which makes sense for the input case
+For the output case, what are the reasons that FileOutputStream(String filename) throws a FileNotFoundException?
+    - file cannot be created for writing
+    - file is actually a directory
+    - file exists but cannot be opened for reading/writing
+read()/write() is Expensive
+ - reading/writing single bytes is grossly inefficient. Similar to shopping without a cart and carrying each item one by one to checkout.
+ - the programming equivalent of the shopping cart would be Buffering. In buffering, you read blocks of bytes into a memory buffer, then you read from that buffer. This is much faster than reading from the disk.
+ - similarly, you can write blocks of bytes to a buffer then flush all of that data to the disk all in a single IO operation. 
+
+-> to do buffering there are two classes: BufferedInputStream & BufferedOutputStream
+- these classes are subclasses of FilterInputStream & FilterOutputStrem respectively, which then subclass InputStream and OutputStream
+- memory buffer referred to here is a simple byte array. Default buffer size is 8192 bytes. This size can be changed with constructors
+- BufferedInputStream & BufferedOutputStream do not work independently as they only offer buffering as their core functionality. They take no responsibility with dealing with files directly on the disk - this is handled by FileInputStream and FileOutputStream
+- thus to work with buffering, the buffered stream has to be chained to another stream eg BufferedInputStream & FileInputStream
+
+Chained Streams
+- thus to work with buffering, the buffered stream has to be chained to	another	stream eg BufferedInputStream & FileInputStream
+In terms of code this is how it looks:
+BufferedInputStream b = new BufferedInputStream(new FileInputStream("file.jpg"));
+- The BufferedInputStream has a constructor which takes an InputStream object as input and that is how the two classes are chained
+This is called a decorator design pattern. Here BufferedInputStream is called the decorator as it is decorating the FileInputStream object with additional (buffering) functionality. 
+Decorator is also referred to as a wrapper class as it is wrapping another object. 
+The open-closed design principle serves as motivation for the Decorator pattern. According to the open-closed design principle, classes should be open for extension but closed for modification. 
+That is what is happening as we are adding new functionality by simply chaining classes rather than modifying them thus avoiding the possibility of making new bugs.
+How are these classes open for extension?
+- both decorator and the class being decorated must have a common supertype eg BufferedInputStream and FileInputStream both have a common supertype InputStream
+-now we can pass around a BufferedInputStream object in place of a FileInputStream. The read method can be invoked as if it was invoked on the FileInputStream object. The read method of the BufferedInputStream object will give us the buffering benefit. Internally, it accesses the read method of the FileInputStream class and will buffer the bytes read. The logic is as follows:
+- the read method in the BufferedInputStream is as follows
+     synchronized int read() throws IOException
+     		  if(buffer has unread data)
+		  	    return first unread byte
+		  else
+			fill-buffer <-- in.read()
+It is basically an implementation of the abstract read() method in the InputStream class. It invokes the read method of the underlying stream ie FileInputStream
+- so by having a common supertype, we are able to extend the read() functionality of the FileInputStream class by providing buffering as an additional capability.
+Note the keyword "synchronized" in the method declaration which is a multithreading feature used to avoid data corruption. Because the method is synchronized, JVM has to make sure that only one thread is able to access it at any given time. So some additional checks are being performed thus causing a slow excecution speed.
+Due to this, the second version of the read method can be used where bytes are read in groups.
+second version: synchronized int read(byte[] b, int offset, int length)
+
+-reads length number of bytes from buffer into array starting at offset
+- returns number of bytes read or -1 if end-of-stream detected
+- this method has fewer invocations since we are reading in groups
+
+Under the hood
+      if(buffer has requested data)
+      	b <-- buffer
+      else
+          if(buffer has partial data)
+	      b <-- buffer.partial
+	      fill-buffer <-- in.read(buffer, buffer-offset, buffer-length)
+	      b <-- buffer.remaining
+	  else // buffer has no unread data
+	      if(buffer.length > b.length){
+	      	    fill-buffer <-- in.read(buffer, buffer-offset, buffer-length)
+		    b <-- buffer
+	      else
+	          in.read(b, offset, length)
+
+Write Operation
+      synchronized void write(int) throws IOException
+   - data is written to buffer
+   - flush buffer to underlying stream if not enough space
+   - second version: synchronized void write(byte[] b, int offset, int length)
+     - writes length number of bytes from array starting at offset into buffer
+     - if buffer does not have enough space, then the buffer contents are flushed and then the array contents are copied into the buffer. Note that for flushing, the write method of the underlying stream method is used --> write(buffer, 0, count) by passing the buffer as the argument where count would be the index of the last byte not yet returned to the stream
+if(b.length >= buffer.length){
+    flush-buffer -> out.write(buffer, 0, count)
+    out.write(b, offset, length)
+
+When the close method is invoked on the decorator, it internally invokes the close method of the underlying decorated stream. If decorator is BufferedOutputStream, then a flush method is first invoked to clear the buffer.
+If the underlying stream is in turn a decorator, then it would inturn invoke the close method on the object that it is decorating. Note here that chaining is not restricted to 2 classes. 
+
+Character Streams
+- to read/write character data
+- built on top of byte streams since everything is binary
+- Reader and Writer serve as base classes for all character oriented streams.
+Reader class
+- reads 16-bit char data in UTF-16 format
+- int read() throws IOException -> reads 1 char and returns int between 
+0 - 2^16 (65535)
+- returns -1 if end-of-stream is detected
+- second version abstract int read(char[] cbuf, int off, int len) throws IOException
+   - reads length number of characters in to array starting at offset
+   - returns total number of characters red or -1 if end-of-stream is detected
+-Recall that all read calls will block until the data is available or some IOException is generated or they reach the end-of-stream.
+
+Writer
+- base abstract class for all character output streams
+- used to write 16-bit character data to a sink (may use another character format)
+- void write(int c) throws IOException
+       - method writes a single character -> lower 2 bytes
+- second version void write(int[] c, int offset, int length) throws IOException
+       - writes length number of characters from array starting at offset
+
+Reader Hierarchy
+				 ______
+				|Reader|
+				--------
+CharArrayReader	StringReader	InputStreamReader  BufferedReader  FilterReader
+				FileReader	   PipedReader
+
+Writer Hierarchy
+				 ______
+			        |Writer|
+				 ------			       
+CharArrayWriter  StringWriter  OutputStreamWriter  BufferedWriter  FilterWriter
+		 	       FileWriter	   PipedWriter	   PrintWriter
