@@ -3089,3 +3089,60 @@ Writer Hierarchy
 				 ------			       
 CharArrayWriter  StringWriter  OutputStreamWriter  BufferedWriter  FilterWriter
 		 	       FileWriter	   PipedWriter	   PrintWriter
+
+The decorator pattern is used to facilitate reading
+
+The File Class
+Useful for manipulating files on the system
+
+File f = new File("go.txt");
+File instance represents a path, not the contents of the tile. Here "go.txt" is referred to as a path name.
+FileInputStream and FileOutputStream have constructors that take a File object as input.
+		    	Windows	     Unix
+Directory Separator	\	     /
+Root	  		C:, D:	     /
+Line Separator		\r\n	     \n
+
+Pathname - can be absolute or relative
+	 absolute -> points to the same path location regardless of the currrent
+	 working directory
+	 relative -> relative to current user
+	 User directory/current working directory -> user.dir system property. Directory in which the Java interpreter is running
+File methods
+getAbsolutePath() --> returns absolute path
+getCanonicalPath() --> returns the simple path name (no ...)
+createNewFile() --> will try to create a new file and return true if successful. If
+		    file is already there, it returns false
+
+Get file members:
+separator --> returns a string representing the directory separator for that given operating system
+separatorChar --> returns a character representing the directory separator for that system
+getParent() --> returns parent directory
+lastModified() --> returns the time in milliseconds from Jan 1, 1970 when the file was modified
+exists() --> boolean
+isFile() --> boolean
+isDirectory --> boolean
+length() --> returns size of the file in bytes
+System.getProperty("user.dir") --> prints working directory
+mkdir() --> create directory [only creates a single directory]
+mkdirs() --> creates a nested directory structure
+delete() --> delete directory [deletes if directory is empty and returns true otherwise false]
+renameTo(new File("new_name") --> rename current file to specified name
+renameTo(new File("new_dir//new_name") --> moves file to that directory and name
+
+dirFilter(true/false)
+list() -> returns a String array of the names of folders and files in the directory
+- you can pass an object for filtering the names. This object must come from a class that implements the interface called FilenameFilter eg
+
+class JPEGsOnly implements FilenameFilter{
+      public boolean accept(File file, String){
+      	     return name.endsWith(".jpg") || name.endsWith(".JPG");
+	}
+}
+
+eg File	documents_folder = new File("/home/user1/Documents");
+   documents_folder.list() --> lists all files in Documents folder
+   documents_folder.list(new JPEGsOnly()); --> returns only files ending with ".jpg" or ".JPG"
+
+
+
