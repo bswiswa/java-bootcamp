@@ -3549,3 +3549,41 @@ while(iterator.hasNext()){
 
 note that the forEachRemaining() can iterate over a collection on its own
 
+List Iterator
+The List interface has two methods that it supports that return instances of ListIterator
+    ListIterator<E> listIterator();
+    ListIterator<E> listIterator(int index); -> returns ListIterator starting from aparticular index in the current list
+
+    public interface ListIterator<E> extends Iterator<E>{
+    	   void add(E e);
+	   void set(E e);
+	   void remove();
+	   -----------------------------------
+	   |boolean hasNext();		     |
+	   |E next();			     |
+	   |boolean hasPrevious();	     |	bidirectional access
+	   |E previous();		     |
+	   |int nextIndex();		     |
+	   |int previousIndex();	     |
+	   ----------------------------------
+	}
+
+- when using Iterator, we can only remove elements.
+- Using ListIterator, we can add new elements and set values of elements. Moreover, Listiterator supports bidirectional access so we can move forward or backward ie we have the regular hasNext() and next() but we also have hasPrevious() and previous() as well. There are also the fields of nextIndex() and previousIndex()
+Due to bidirectional access the remove method will remove the element returned by the immidiately preceding call which has to be either next() or previous(); Otherwise, an IllegalStateException will be thrown. With Iterator it was only the next() method as there was no previous() option.
+-similar semantics also apply for the set() method that is it updates the last element returned by next() or previous()
+-add() method simply adds an element and updates the cursor position
+-ListIterator is useful for traversing trees
+Cursor position:
+- the cursor is in between two elements so there is no concept of current element with ListIterator. That is why we only have next(), nextIndex(), previous() and prevousIndex() methods but not currentIndex().
+So when we start an iteration and we invoke nextIndex() we get 0. If we try to get the previousIndex() whilst we are at the start of an iteration, it returns -1. If we invoke nextIndex() when we are at the end, then the size of the list is returned.
+
+   List<String> list = new ArrayList<>();
+   list.add("a");
+   list.add("b");
+   list.add("c");
+
+   for(ListIterator<String> iterator = list.listIterator(); iterator.hasNext();){
+   			    System.out.println("iterator.nextIndex: "+ iterator.nextIndex();
+}
+
