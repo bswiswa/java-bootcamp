@@ -3587,3 +3587,204 @@ So when we start an iteration and we invoke nextIndex() we get 0. If we try to g
    			    System.out.println("iterator.nextIndex: "+ iterator.nextIndex();
 }
 
+LinkedList
+-singly linked list
+
+class Node{
+      int data;
+      Node next;
+      ...
+}
+
+first node is the head node
+
+class LinkedList{
+      Node head = new Node();
+      void add(int data){
+      	   Node newNode = new Node(data);
+	   new Node.next = head.next;
+	   head.next = newNode;
+	}
+}
+
+Doubly Linked LIst
+Nodes linked with next and previous nodes. head is linked to the first and last element
+Has benefit of making the linked list act as a deque. A deque has frequent operations that allow us to manipulate the first and the last node.
+If we want to look for an element at a particular index, then we only have to traverse through half of the list as we can choose the direction in which we want to travel from the head that will get us to the index in the shortest time.
+
+class Node{
+      int data;
+      Node next;
+      Node prev;
+      ...
+      }
+
+class DoublyLinkedList{
+      Node head = new Node();
+      head.next = head;
+      head.previous = head;
+      void add(int data){
+      	   Node newNode = new Node(data);
+	   //set outgoing links
+	   newNode.next = head;
+	   newNode.prev = head.prev;
+	   //set incoming links from head's previous prev
+	   newNode.prev.next = newNode;
+	   newNode.next.prev = newNode; //head.prev in this case
+      }
+}
+
+Typical uses of doubly linked list
+- frequent add/remove during iteration - when you remove or add an element to a doubly linked list, you only have to adjust the links at the point of insertion into the list. No need to shift elements like in ArrayList. Thus the DoublyLinkedList is better for the removeAll() & retainAll() operations since you have to remove elements as you iterate
+O(n) Methods
+get(i)
+add(i,e)
+remove(i)
+indexOf(Object)
+lastIndexOf(Object)
+
+Note that for get(i), add(i, e) and remove(i), we must traverse the doubly linked list to get to that position so these operations are O(n/2) since we only have to traverse at most,n/2 of a doubly linked list.
+This decision of the direction of traversal is made as follows:
+     if(index <	 (size >> 1)){
+     	            for(int i	= 0; i <= index; i++)
+		    	          e  = e.next;
+     }else {
+       for(int i = size; i > index; i--)
+         e = e.previous;
+     }
+
+Like an ArrayList, linked list also allows duplicates and null values
+
+			ArrayList	LinkedList	DoublyLinkedList
+------------------------------------------------------------------------     
+get(i)			  O(1)           O(n)                 O(n/2)  
+------------------------------------------------------------------------
+add(i,e)
+------------------------------------------------------------------------
+remove(i)
+------------------------------------------------------------------------
+indexOf(Object)
+------------------------------------------------------------------------
+lastIndexOf(Object)
+------------------------------------------------------------------------
+
+LinkedList supports operations in Last-In-First-Out (LIFO) and First-In-First-Out(FIFO) in constant time - O(1)
+
+List<Integer> list1 = new LinkedList<>();
+With this change we can run all the previous commands exactly as they are with ListIterator and Consumer.
+
+Queue Interface
+- useful when manipulating head & tail
+- elements are added at tail whilst they are removed/retrieved from head. Thus Queue is a first-in-first-out implementation (FIFO)
+- can have duplicates.
+- can have nulls but generally not supported. -> don't insert them if possible
+- queues do not support indexed access to lists
+- in addition to methods inherited from the Collection interface, Queue also has additional methods specific to its custom head and tail manipulations
+
+               Throws exception	   	    	Returns special value
+--------------------------------------------------------------------------------
+Insert           add(e)				  offer(e) ~ false
+--------------------------------------------------------------------------------
+Remove		 remove()			  poll() ~ null if queue is empty
+--------------------------------------------------------------------------------
+Inspect		 element()			  peek() ~ null if queue is empty
+--------------------------------------------------------------------------------
+
+To insert an element to the queue we can use either add(e) or offer(e). Both return true if successful. If queue is a capacity restricted queue, then the add(e) method will throw an IllegalStateException while the offer method will just return false. Thus when working with capacity-restricted queues it is better to use the offer(e) method as it doesn't throw a runtime exception but instead allows us to perform some alternative action.
+We can remove the head element using either remove() or poll(). If queue is empty, remove will throw an exception while poll will return a null value. Because poll() returns a null value when the queue is empty, that is why it is not recommended to insert null values into queues as it is no longer clear whether the value is null or if the queue is empty.
+Inspection methods are element() and peek(). These return the head element but will not remove it. If queue is empty, then element will throw an exception whereas peek() will return null.
+
+Deque
+-extends the queue. In fact, it stands for Double-Ended Queue
+-it allows items to be added/removed at both ends of the queue
+-as it is a queue, it can model FIFO, but with the extra capability it can also model LIFO
+-there is a legacy class called Stack but it has mostly been replaced by an ArrayDeque.
+Implementations of Deque:
+- ArrayDeque
+- LinkedList
+- ConcurrentLinkedDeque
+- LinkedBlockingDeque
+Deque methods
+Methods that work on the last element(tail):
+add(e)	| offer(e)
+addLast(e) | offerLast(e)
+removeLast() | pollLast()
+getLast() | peekLast()
+
+Methods that work on the first element(head):
+remove() | poll()
+element() | peek()
+removeFirst() | pollFirst()
+getFirst() | peekFirst()
+addFirst(e) | offerFirst(e)
+
+**Note that just like queue, deque supports these two versions of methods with the left version throwing an exception and the other returning a special value
+Deque also supports methods which emulate the Stack class:
+push(e) - same as addFirst(e)
+pop() - removeFirst()
+peek() applies to both queue and stack
+by default, push(e), pop() and peek() were designed to be methods working with the head.If you want to use stack-like behavior but with the tail, then you use add(e), removeLast() and peekLast() methods
+There are also methods like removeFirstOccurrence(Object) and removeLastOccurrence(Object) so if needed you can use these.
+BlockingQueue
+- these are queues where operations can block (wait on something).
+- eg if we want to add an element into the queue and the queue is full, then the add(e) operation would wait until some space is available. Similarly, a remove operation would wait if the queue is empty until an element gets inserted.
+- BlockingQueue extends the Queue interface
+BlockingDeque
+- extends both Deque and BlockingQueue
+
+ArrayDeque
+-an array implementation of a deque and it is resizable
+-models both FIFO and LIFO
+- added in Java 6
+-can be created using ArrayDeque() or ArrayDeque(int)  or ArrayDeque(Collection)
+     - it can be unbounded, or you can specify a size. You can also create it with elements from a specified Collection.
+- unlike LinkedList, you cannot add null values to an ArrayDeque. And also, unlike LinkedList, ArrayDeque does not implement List
+- it is preferred to use an ArrayDeque over LinkedList
+  -from the Java doc of ArrayDeque ~ faster than LinkedList as a queue
+  - 3X better than LinkedList for large queues. This is because with LinkedList we have to create an additional node object with every newly added element
+    - LinkedList ~ node allocations overhead + GC cost: This is	because	with LinkedList	  we have to create an additional node object with every newly added element. Also, when an element is removed there is an additional Garbage Collection cost.
+
+Why can't we use an ArrayList as a FIFO? eg add() and remove(0)?
+- performance -> remove(0) on ArrayList would shift all elements. The severity increasing the more elements we have. For 1000 elements, LinkedList can be up to 20X faster.
+- what about element shifts in an ArrayDeque? How are they any better given that an ArrayDeque is also an array?
+  -> an ArrayDeque's implementation is based on a circular array thus we have no element shifts O(1)
+-ArrayList should not be used as a queue due to intention. From a design perspective, the intention when using an ArrayDeque is to use it as a FIFO or LIFO which involve only head or tail manipulations. With ArrayList we do not constrain ourselves just to head and tail. 
+
+Method Complexities
+- most run in amortized constant time (mostly constant time)
+- O(n)
+  - remove(Object)
+  - removeFirstOccurrence(Object)
+  - removeLastOccurrence(Object)
+  - contains(Object)
+
+-Note that there is no way for us to add an object to the middle of the queue. We can delete elements internally though.
+
+//create an instance of an ArrayDeque
+Deque<String> deque = new ArrayDeque<>();
+//use deque as a queue (FIFO)
+      deque.add("walden");
+      deque.add("harry potter");
+      deque.add("head first java");
+
+      //removing elements
+      System.out.println("Printing Queue...");
+      System.out.println(deque.remove());	//"walden" removeFirst() 
+      System.out.println(deque.remove());
+      System.out.println(deque.remove());	// deck is now empty
+
+//use deck as a Stack (LIFO)
+      deque.push("walden");
+      deque.push("harry potter");
+      deque.push("head first java");
+
+      //removing elements
+      System.out.println("Printing Stack...");
+      System.out.println(deque.pop());	//"head first java"	
+      System.out.println(deque.pop());
+      System.out.println(deque.pop());	// deck	is now empty
+
+* Note that a LinkedList can also implement a Deque thus our declaration above could have been
+Deque<String> deque = new LinkedList<>(); 
+This would have worked out just fine too. HOWEVER, it is recommended that you use ArrayDeque as it is faster.
+
