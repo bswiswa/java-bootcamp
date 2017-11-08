@@ -3090,7 +3090,49 @@ Writer Hierarchy
 CharArrayWriter  StringWriter  OutputStreamWriter  BufferedWriter  FilterWriter
 		 	       FileWriter	   PipedWriter	   PrintWriter
 
-The decorator pattern is used to facilitate reading
+The decorator pattern is used to facilitate reading. In this pattern, classes use other classes as input and add functionality to those unique instances only
+eg 
+   StringBuilder text = new StringBuilder();
+try(BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream("file.dat"), "UTF-8")){
+   String line = null;
+   while((line = in.readLine()) != null){
+   	       text.append(line).append("\n");
+	       }
+}catch(UnsupportedEncodingException e){
+   e.printStackTrace();
+}catch(IOException e){
+  e.printStackTrace();
+}
+
+Here FileInputStream reads the bytes from the file, passes them to InputStreamReader which decodes the bytes to characters, by a specified encoding format (here UTF-8) and BufferedReader makes the process more efficient by storing the characters in a buffer, and flushing them every so often.
+
+If working with just text, one can also use the simple Scanner class to work with files and console input. Scanner's constructor can be called with a File object:
+eg Scanner in = new Scanner(System.in);
+in.nextLine() --> reads from console and returns string
+in.nextInt(); in.nextDouble(); in.hasNext() --> boolean
+in.close();
+
+Scanner can also work with files
+Scanner infile = new Scanner(new File("data.dat"));
+while(infile.hasNext()){
+	System.out.println(infile.nextLine());
+}
+infile.close();
+
+Since Scanner was created with File argument, it will create FileInputStream internally and will close it automatically. File object does not need closing since its not a Closeable resource. Thus Scanner can be used in a try-with-resources block.
+
+Writing to a file is similar:
+
+try(BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("blank_file.txt"), "UTF-8")){
+		   out.write();
+}catch(UnsupportedEncodingException e){
+   e.printStackTrace();
+}catch(IOException e){
+   e.printStackTrace();
+}
+
+
+or
 
 The File Class
 Useful for manipulating files on the system
@@ -3145,4 +3187,365 @@ eg File	documents_folder = new File("/home/user1/Documents");
    documents_folder.list(new JPEGsOnly()); --> returns only files ending with ".jpg" or ".JPG"
 
 
+Serialization & Deserialization
+Sometimes we need to save regular objects into files and open them up at a later time in the same state. Typically you save object state to a database but there are times when saving on the disk is handy.
+Serialization is the process of writing Java objects to some destination - that is, Java objects get saved as byte streams.
+Deserialization is the reconstruction of Java objects back from their byte stream. Serialized objects can also be transferred across JVMs.
+
+To serialize an object, its class has to implement java.io.Serializable. To perform the actual serialization, we use the classes ObjectOutputStream. For deserialization, we use ObjectInputStream. 
+ObjectOutputStream implements ObjectOutput interface whilst ObjectInputStream implements ObjectInput interface
+
+Serialization Example
+ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("object.ser")));
+out.writeObject("Only objects from classes that implement the Serializable interface, can be serialized eg String and Date");
+out.writeObject(new Date());
+
+- convention is to write serialized object files with suffix ".ser" but it is not required
+ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream("object.ser")));
+String s = (String)in.readObject(); //returns an Object instance and needs proper downcasting
+Date d = (Date)in.readObject();
+
+Objects need to be read in the same order in which they were serialized.
+
+Use cases of serialization
+- high traffic web pages with frequent reads than writes
+  - serialize to disk or perform caching eg memcached. when the webpage is visited the first time, we can create a Java object that is serialized and stored on the disk and then on subsequent visits the website can be built using the serialized object avoiding database read operation and object construction.
+-passing Java objects to remote hosts -> you can serialize the object and pass to the web service. Web service will in turn deserialize the object.
+- postmortem analysis -> if an object is causing an error, you can serialize that object and later deserialize it with a debugger to see why it caused those errors.
+
+Serialization Facts
+- primitives & arrays are serializable by default
+- serialization saves the entire object graph -> if an object is serialized, any object it references and any objects those objects reference will also be serialized.This means that if even one of of the objects in the objects graph doesn't implement Serializable, serialization will fail.
+- if the same object is referred to multiple times on the object graph, it is saved only once
+- STATIC variables are NOT SERIALIZABLE -> this is because Serialization is about object state. This means that during deserialization, a static variable will be assigned the value that the class has at that particular time, not when the object was serialized.
+- if a Superclass is serializable, then the subclasses are automatically serializable. If superclass is not serializable, subclasses are still free to implement the Serializable interface and be serializable.
+- if you do not want a particular instance variable to be serialized, you can mark it with the keyword "transient" during its declaration. During serialization, this variable's value will be skipped. During deserialization, the variable will be given a default value based on its type eg objects --> null, int --> 0
+Deserialization Process
+-read serialized object
+-find serialized object's class name and load Class object
+-Deserialization fails if:
+		 - Class object cannot be loaded
+		 - version mismatch eg if new fields are now present in class or old
+		   ones have been deleted thus making the class and the serialized
+		   object incompatible. Class has evolved after object was serialized
+-create new object on heap & restore its state -> object's constructor is not run since that would create a brand new object rather than recreate object with same state. If there is a non-serializable ancester then run ancestor's constructor and any constructor of all its direct and indirect superclasses (even if those are serializable)
+- instance variables get serialized state
+- transient variables get default values
+
+serialVersionUID
+-every serializable class gets a version ID computed from class structure
+-this version id is stored in the .class file. Thus whenever the class structure changes, the version id also changes
+-this version id is called serialVersionUID. This version id is not generated for non-serializable objects.
+-when a serialized object is generated, the object is stamped with the serialVersionUID that the class had at that time.
+- during deserialization, serializedObj.serialVersionUID == class.serialVersionUID
+   - if true deserialization passes, otherwise, it fails
+Challenge: How can we still make deserialization work even after class has evolved?
+-Solution: make serialVersionUID constant even if class evolves eg
+	   static final long serialVersionUID = 888888353586783L;
+-where do we get the long number? you can run the serialver command on the .class to get the version at the time of serialization then you can make the serialVerionUID of the class a static final long variable of that value
+
+Changes that do not affect deserialization (by hard-coding serialVersionUID)
+- add/delete instance variable
+- make instance variable static
+- change instance variable from transient to non-transient
+-change access levels of variables
+- add/remove classes to/from inheritence tree
+
+Changes that affect deserialization:
+-change instance variable's type
+-make serializable class (anywhere in object graph) non-serializable
+
+Collections Framework
+-part of java.util package which includes classes representing sofisticated data structures.
+-ready to use highly efficient data structures we can use, right out of the box without implementing them ourselves
+
+Arrays and their limitations
+-fixed number values
+-not extendible
+-element search is expensive - linear
+-it is difficult to build software with just an array
+
+General requirements needed when working with real-world data
+- No knowledge about size
+- automatically extendible
+- fast random access
+- fast lookups
+- ordered vs unordered
+- dublicates vs unique
+- null vs non-null
+- automatic sorting
+- <key, value> mappings
+
+Collections Framework
+Contains:
+- interfaces
+- implementations of those interfaces eg ArrayList
+- algorithmic classes eg Collections
+
+Core interfaces include:
+	Collection					Map
+List	Set		Queue				SortedMap
+	SortedSet	Deque
+
+Collection represents a collection of objects whilst Map represents a collection of key,value pairs.
+These interfaces allow us to define common protocols and thus give us the benefit of polymorphism which allows us to manipulate collections independently of implementation
+Commonly used implementations:
+- ArrayList, LinkedList
+- HashSet, TreeSet, LinkedHashSet
+- ArrayDeque, LinkedList
+- HashMap, TreeMap, LinkedHashMap
+
+Note that the names are quite similar for Set and Map implementations. This is because Set implementations internally use Map implementations.
+The interfaces SortedSet and SortedMap ensure that all the data in them is sorted and placed in the appropriate position.
+All the implementations in the Collections class are Serializable, implement clone() an d most allow nulls. 
+Note that there are are legacy implementations Vector, Hashtable and Stack which are synchronized. Earlier implementations were not synchronized however it is recommended to not use them as synchronization slows operations and it is recommended that it be added externally.
+Instread of Vector -> use ArrayList, Hashtable-> HashMap, Stack -> ArrayDequeue
+
+Collection Interface
+It is the root of the Collection hierarchy
+- represents a collection of objects
+- polymorphically provides maximum generality so whenever possible, you should use it to reference objects
+- some of its implementations eg ArrayList allow duplicates and some don't
+- some collections are ordered and others unordered
+- Collection interface has different subinterfaces but it has one direct subclass called AbstractCollection -> provides a skeletal implementation of the Collection interface[ recall that skeletal implementation help to minimize the work required to implement interfaces ]
+declaration:
+	public interface Collection<E> extends Iterable<E>{ ... }
+Collection interface extends another interface which enables its objects to be used in for:each loops. Iterable is from java.lang and contains one abstract method called iterator() which a subclass has to implement if its instances are to be able to be used in for:each loops
+
+Collection interface contains several fundamental method common to all collections and they can be broadly classified into 3 categories:
+1. Basic Operations
+2. Bulk Operations
+3. Array Operations
+
+Basic Operations eg
+public interface Collection<E> extends Iterable<E>{
+       boolean add(E element); //optional - boolean if it could add. Is optional operation because a subclass need not support it. It can define an empty method and throw an UnsupportedOperationException to indicate that it does not support the add method.
+       boolean remove(Object element); //optional
+       boolean contains(Object element); - basically the search method
+       int size();
+       boolean isEmpty();
+       Iterator<E> iterator(); --> returns an instance of Iterator which helps in iterating elements of collection
+}
+
+Bulk Operations eg
+public interface Collection<E> extends Iterable<E>{
+       boolean addAll(Collection <? extends E> c); // optional - adds all elements in the input collection object into the current collection
+       boolean removeAll(Collection<?> c); //optional - removes all elements in the in\
+put collection object from the current collection
+       boolean retainAll(Collection<?> c); //optional - retains all the elements present in the input collection object and deletes all teh others from the current collection
+       boolean containsAll(Collection<?> c); --> returns true if the current collection contains all the elements in the input collection
+       void clear(); // optional --> remove all elements in collection
+
+Array Operations eg
+public interface Collection<E> extends Iterable<E> {
+       Object[] toArray();
+       <T> T[] toArray(T[] a); --> type of return array is the same  as the type of the input array. The input can also be a subtype or there will be an error.
+       // eg String[] a = c.toArray(new String[0]); 
+}
+- array operations act as bridge operations between the collections classes and the arrays
+
+List Interface
+- useful when sequence/positioning matters
+- models resizeable linear array with indexed access
+- zero based
+- can have duplicates
+declaration:
+		public interface List<E> extends Collection<E> { ... }
+In addition to methods inherited from Collection, it also adds new ones. These additional ones are in 4 categories:
+1. Positional
+2. Search
+3. Iteration
+4. Range-view
+
+Positional Operations
+public interface List<E> extends Collection<E>{
+       E get(int index);
+       E set(int index, E element); // optional -> inserts an element at a specified index and returns the element previously stored at that index
+       void add(int index, E element); // optional -> adds element at specified index
+       boolean add(E element);  //optional --> adds to end of the list
+       E remove(int index);  //optional
+       boolean addAll(int index, Collection<? extends E> c); //optional
+}
+
+Search Operations
+public interface List<E> extends Collection<E> {
+       int indexOf(Object o); --> return index of first occurrence of element or -1 if not in list
+       int lastIndexOf(Object o); --> index of last occurence of object or -1 if element not found in list
+}
+
+Iteration Operations
+public interface List<E> extends Collection<E>{
+       ListIterator<E> listIterator(); --> returns an instance of ListIterator interface[a subinterface of Iterator interface]
+       ListIterator<E> listIterator(int index); --> returns instance of ListIterator interface
+}
+
+Range-view Operations
+public interface List<E> extends Collection<E> {
+       List<E> subList(int fromIndex, int toIndex); --> returns a subset of the list which is in the specified range (toIndex is exclusive so element at that index is not returned). The returned list is backed by the original list so any changes made to the return list will be reflected in the original list.
+}
+
+
+ArrayList
+- an implementation of the List interface. One of the most commonly used data structures
+- it is a resizable array implementation of a List interface. 
+- since an array is used internally, it has a default capacity. This capacity is set at 10. When capacity is reached, a new array which is about 50% larger than the previous one is created and elements are copied to it.
+- if dealing with a high initial capacity of elements, then you can declare the list with a high starting capacity using the constructor ArrayList(int initialiCapacity) or the method ensureCapacity(int) before adding a large number of elements.
+-allows storing duplicates and null values.
+
+Typical uses of ArrayList
+- simple iteration of elements eg elements fetched from database
+- fast random access ~ O(1) --> size of collection doesn't matter
+- appending elements or deleting LAST element ~ O(1) --> ArrayLists are very good at this operation. Note that if ArrayList size has been reached, then appending an additional element would trigger array resizing so in that case there will be additional time involved.
+
+add & remove Methods
+add(index, element)
+  - when we add an element to a certain position, all the elements following it, will be shifted right by one position
+  - O(n) [in the worst case if we are placing an element at the 0th position, then all n elements will be shifted right]
+
+remove(index)
+- all elements following that index will be shifted left by one position
+- O(n) [in the worst case if we are removing an element at the	0th position, then al\
+l n elements will be shifted left]
+
+Search - contains() & indexOf()
+- contains() - boolean result of (is specified element in the ArrayList?)
+- indexOf() - returns index of specified element if in ArrayList, otherwise 0
+-both methods scan the ArrayList from its beginning thus in the worst case the operations will take O(n)
+- these methods also use the equals() method to compare the input element with each element in the list. The equals method is from the Object class and can be overwritten by any subclass
+- IF THERE ARE FREQUENT SEARCHES CONSIDER USING A SET IMPLEMENTATION eg HashSet can search for an element in constant time
+
+removeAll()
+- removes all elements shared between the input collection and current collection.
+- invokes the collection.contains() on every element
+  - if element is present -> uses the collection.remove() method
+  - thus it can be worse than O(n^2) as it has the following operations:
+    - O(n) for traversing the current list
+    - O(n) for calling contains() [if collection is list implementation]
+    - O(n) for element shift on remove. LinkedList and HashSet are better for removal
+retainAll() has identical peformance issues to removeAll()
+
+Constant Time (O(1)) methods in ArrayList
+- size()
+- isEmpty()
+- set() & get()
+- iterator() & listIterator()
+
+Demo of ArrayList
+ Collection<Integer> list1 = new ArrayList<>(); --> here we set the object to Collection because it gives us more flexibiliby on the implementation due to polymorphism. Thus we could one day change to linked list and allwe would do is change the declaration to: Collection<Integer> list1 = new LinkedList<>(); --> note that only the right side changes.
+
+ list1.add(1);	     //add()
+ list1.add(3);
+ list1.add(null);	// can store null values
+
+System.out.println("list1 = "+ list1); --> printing an ArrayList
+
+list1.remove(3) // remove element at ith position
+*note that if the element at the nth position is equal to null, the remove(n) will not work and it will instead remove the n-1th element. Note that the reason this does not work is that teh remove() method being used is not the one from our implememtation. Rather it is the one from the Collection interface. This is because of static binding at compile time. The compiler looks for a remove method that takes an int in the Collection interface and when it doesn't find it, it assigns a method with a compatible signature and binds it during compilation. In this case, it binds a remove that targets an actual Object rather than an index. 
+At run time, the interpreter will find an object of type ArrayList but will look for a remove() method which takes an Object argument rather than the int one. Once it finds it first searches in its methods then up the inheritence tree, it will excecute that one and ignore the int one. So in the end, the remove we had was actually removing the element with value of 3 and not at position 3. 
+In order to prevent this, we can the declaration type of the list to List rather than the more general Collection:
+   List<Integer> list1 = new ArrayList<>();
+
+list1.add(0, 10) --> add a new element with value 10 to the 0th position
+list1.set(0, 20) --> set value of element at 0th position to 20. This returns the previous value at that position.
+
+Bulk operations
+making a new list:
+       Collection<Integer> list2 = new ArrayList<>();
+       list2.add(9);
+       list2.add(3);
+
+       list1.removeAll(list2); //remove all elements in list2 from list1
+       
+       list1.retainAll(list2); //keep only all elements present in list2 in list1
+
+       list1.addAll(list2); // all in list2 added to list1
+       
+Search methods:
+       list1.contains(1); // is 1 present in list1?
+       list1.indexOf(1); //what position is the element 1 in? Similar to String indexOf
+       list1.lastIndexOf(1)
+
+Range-view
+List<Integer> list3 = list1.subList(2,3);
+list3.set(0, 6); -->list3 is backed by the original list so any changes made here will be reflected in the original
+list3.add(0,7); // note that here we are adding 7 to position 0 in list 3 which is actally position 2 in list1. This addition will show in those respective positions for both lists.
+Changing the original list also reflects in the created list. This is true except for adding new elements or removing new elements. -> we can only make non-structural changes
+
+We can use the for:each loop to iterate through an ArrayList eg
+for(int element: list1){
+System.out.println(element);
+}
+
+However we cannot iterate using the for:each loop and try to make structural changes to the ArrayList eg
+for(int	element: list1){
+System.out.println(element);
+	if(element == 9){ list1.remove(Integer.valueOf(element)); //use valueOf to create Integer boxed primitive object
+}
+This code generates a ConcurrentModificationException.
+To make such structural changes whilst looping, we use an Iterator instance
+Iterator
+- an iterator is an interface. To use the iterator we need to access an instance of Iterator we need to invoke the iterator() method located in the Iterable interface from the java.lang package
+The Collections interface extends Iterable and Collection implementations like ArrayList implement the iterator() method. By extending Iterable, Collections is indicating that its elements can be iterated. The for:each statement requires that any object iterates to implement the Iterable interface.
+
+    public interface Iterable<T>{
+    	   Iterator<T> iterator();
+	   default void forEach(Consumer<? super T> action);
+	   default Spliterator<T> spliterator();
+	}
+
+iterator() is abstract. The other two methods in the interface (forEach(), spliterator())) are default methods (which were written in Java 8) so they come with some minimal implementation. 
+iterator() returns an Iterator which can be used to iterate the elements of the Collection. Internally, for:each statement also invokes this method when iterating the collection elements.
+forEach() method can be invoked if are performing a certain action for each element of the collection. This action would be a method in an object which is passed  as input to the forEach() method, hence we can see that the parameter name for forEach(Consumer<? super T> action); is "action". So the method which is part of the input object will be invoked forEach of the elements in the collection. And that method's input will be the element itself, so the method would have a single parameter. Notice that the parameter type of the forEach(Consumer<? super T> action) is Consumer. Consumer is an interface introduced in Java 8 which has a single abstract method called accept(). So we need to pass an instance of Consumer which implements the accept() method or we can pass lambda expressions or method references which are Java 8 features.
+spliterator() was also added in Java 8. It is useful for splitting the elements of collection into partitions so that we can process those partitions using separate threads. You can use this methods for parallel computation of a large sized collection.
+
+The Iterator allows element removal during iteration. The iterator interface looks like this:
+    public interface Iterator<E>{
+    	   boolean hasNext();
+	   E next();
+	   void remove();
+	   default void forEachRemaining(Consumer<? super E> action);
+	}
+If you evoke the iterator() method of ArrayList for example, it will evoke an instance of this interface. ArrayList can do this because it has a nested class which implements this interface. So an instance of that nested class will be returned when the iterator() is invoked
+Iterator methods:
+- has 4 methods outlined above:
+  - remove() is used to remove an element
+  - the forEachRemaining(Consumer<? super E> action); is similar to the forEach() method in the Iterable interface
+
+  Iterator<Integer> iterator = list1.iterator();
+  while(iterator.hasNext(){
+    int element = iterator.next(); [automatically unboxed and assigned to int from Integer]
+    if(element == 9){
+    iterator.remove();
+  }
+NOTE: to use the remove() method, it has to be preceded by a next(); Otherwise, we get a compilation error
+-> To remove an element whilst iterating through a collection, we need to use iterator
+
+- iterators throw a ConcurrentModificationException is called a fail-fast iterator.
+- all the general purpose implementations like ArrayList, LinkedList support only support fail-fast iterators
+
+list1.forEach(System.out::println); note that :: are used to point to the method. Thus we can pass a method reference, lambda or an object which is an instance of Consumer interface. This instance must have a method called accept() which can be used for filtering. We can pass method references but internally the Consumer interface instance is create and its accept() method is given the method code so that the forEach() function can work.
+
+forEachRemaining() is defined by the Iterable interface it is used  to update the rest of the elements whilst looping through
+
+eg public class DontPrint{
+   public static dontPrint(Integer i){
+   System.out.print("...");
+   }
+}
+   public class PrintIt{
+   public static printIt(Integer i){
+   System.out.println(i);
+   }
+}
+
+Iterator iterator = list1.iterator();
+while(iterator.hasNext()){
+	int i = iterator.next();
+	if(i < 3){
+	iterator.forEachRemaining(PrintIt::printIt)
+	else
+	iterator.forEachRemaining(DontPrint::dontPrint);
+ }
+
+note that the forEachRemaining() can iterate over a collection on its own
 
