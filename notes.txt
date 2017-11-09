@@ -3788,3 +3788,117 @@ Deque<String> deque = new ArrayDeque<>();
 Deque<String> deque = new LinkedList<>(); 
 This would have worked out just fine too. HOWEVER, it is recommended that you use ArrayDeque as it is faster.
 
+Hash Table
+- implements an associative array - associates keys with values
+- data structure in which each element is an association between a key and a value. A collection of <key, value> pairs
+- each key,value pair is called a mapping. The hash table is also referred to as a dictionary.
+
+Key operations:
+O(1) operations:
+- insert<key,value>
+-search by key
+-remove by key
+Characteristics
+-cannot contain duplicate keys but it can contain duplicate values
+-each key at most maps to 1 value
+-certain implementations allow 1 null key. null values are fine. Some implementations do not allow any nulls at all for both keys and values
+Implementation
+Consists of an array containing references to linked lists which store the actual key-value mappings. Each slot in the array is called a bucket. Each linked list can have multiple mappings too.
+For every operation on the hash table, the first operation is to quickly locate the target bucket. Then we need to traverse and search the list at that particular bucket.
+To quickly look at the bucket for a given <key,value> pair, a function called Hash function is applied on the key.
+Hash Function
+-is a function of key and array-size [ f(key, array-size)] eg key % array-size
+- transforms large space to smaller one eg if array-size is 25 and the key is 315 which bucket do we first look in? The answer is given by our hash function => 315 % 25 = 15
+
+2-Step Hashing In Java
+-generally hashing involves 2 functions
+
+hash = hash(key.hashCode()) // hashCode() returns the memory value of an object converted to an int value
+bucket # = hash & (length - 1) // once we get our int hash, a bitwise & is used in order to offset it into the hash table that is to find the target bucket [note that our array indices start from 0 and up so if we do not subtract 1, we would not properly place appropriate items in index 0]
+the hash function itself can look like this 
+int hash(h){ h^= (h >>> 20) ^ (h >>> 12); 
+    return h ^ (h >>> 7) ^ (h >>> 4);
+}
+
+The hash function above may look very strange but recall that the main goal for the hash table is to operate in constant time. In order to do this, the hash function logic should be highly efficient. A function that uses several multiplications and divisions can be slow. Using bitwise and bitshift operations as shown in the above function will give us the performance benefit. 
+The hash function should be able to quickly locate the bucket and uniformly disperse elements. If we only use the hash code of the key[ ie key.hashCode() ] instead of the hash function, there is a chance that several keys may get hashed into the same bucket which is called hash collision which is when a disproportionate amount of mappings are stored on the same linked list. This heaping of mappings to few linked lists will slow down the operations because once we find the bucket, we must perform a linear search inside that linked list to find the <key, value> pair we seek. The ideal situation would be to have one mapping per bucket but it is difficult to achieve in practice so we strive to minimize the hashmap collisions as much as possible. That is what the hash function is trying to do.
+
+Insertion
+- locate bucket for a given key
+- check if bucket is empty 
+  - if empty: add new linked list with our given <key, value> mapping
+  - if not empty: check if linked list has another mapping with the same key
+       	   	    - if no such mapping, then we add our mapping to front of the list
+		    - if there is mapping, overwrite the old value with the new
+Other performance factors
+- besides a good hash function, there are other factors that contribute to performance:
+  - capacity -> number of buckets in hashtable
+  - load factor -> how full the hash table can get before its capacity is automatically increased. For HashSet, default capacity is 16 and load factor is 0.75 (meaning the table will not be resized until it is 3/4 full)
+-in the case of an ArrayList, resizing is not a big issue as it involves creating a new larger array and copying the elements to it. With hashtable, we copy the contents but also the hash function has to be reapplied on all the keys again as the hash function is reliant on the length of the array too. So keys might get rehashed to new buckets.
+- high load factor --> less frequent rehashing --> more lookup time
+Hash tables are very widely used:
+     - database indexing
+     - NoSQL databases - they are based on key-value lookups
+     - switch statement uses a hash table
+-since elements are stored based on the hash function, a has table does not preserve the order of insertion.
+
+Set & HashSet
+Set interface
+- extends the Collection interface
+- models a mathematical set ie no duplicates
+- useful when uniqueness & fast lookup matters
+- HashSet is based on HashTable as it internally uses HashMap. 
+- with List interface, element position was a criteria, that is insertion order is important. But with Set, insertion order does not matter but rather fast lookups and uniqueness.
+-SortedSet is a subinterface of Set and it can additionally be useful for sorting the elements. So in addition to uniqueness and fast lookups, SortedSet can also help with sorting the elements.
+-unlike List, Set does not add any new methods on top of what it inherits from the collection interface. However, because it does not allow duplicate methods, it places additional requirements on some of the inherited methods and constructors eg for the addAll() method is explicitly does not allow any duplicates.
+
+HashSet
+-is a HashTable based implementation of a Set interface
+- internally uses a HashMaps with those <key, value> pairs
+- since HashSet stores only individual objects, those objects will be stored as keys while an empty Object(an actual instance of the Object class) will be stored as a  value:
+  key = element, value = new Object() 
+-permits one null value
+
+Typical Uses
+- rapid lookup, insertion and deletion are done in close to O(1)
+- insertion order is not important
+- better for removeAll() and retainAll() than ArrayList. For ArrayList, each remove() execution has a linear time complexity due to element shifts. With HashSet, each remove will be done in constant time.
+
+Declaring HashSet:
+Set<String> set1 = new HashSet<>();
+set1.add("a");
+set1.add("b");
+set1.add("a");
+System.out.println(set1); // set1: [a, b] --> no duplicates
+ 
+class Book{
+      private String title;
+      private String author;
+      private int year;
+}
+//create identical instances of the same object
+Book book1 = new Book("Moby Dick", "Herman Melville", 1851);
+Book book2 = new Book("Moby Dick", "Herman Melville", 1851);
+
+Set<Book> set2 = new HashSet<>();
+set2.add(book1);
+set2.add(book2);
+System.out.println(set2); // assuming Book has a custom toString() method
+			  // both book1 and book2 are added to the set even though they are logically equal. We need to set up the HashSet some more to prevent this
+We know that HashSet internally uses HashMap which is based off of HashTable. HashTable uses a hash function in order to move into the HashTable and find the correct bucket number. In this case, if the second element is a duplicate then it needs to have the same hashCode() as the other one. In the case above, both of these objects will have different hashCodes(). The hashCode() method is defined in the collection class and it returns the memory address of a given object after returning it as an int.
+In our code above book1 and book2 are different objects so they have 2 different memory addresses and thus if we run the hashCode() method on them we get different values.
+We need to overwrite the hashCode() method so it returns the same value for identical objects eg
+public int hashCode(){
+       return title.hashCode();
+}
+Since the titles are the same (String pool) so this invocation will return the same hashCode(). 
+If we run this, we still get duplicates in the HashSet. The reason is that we have overwritten the hashCode() method so both will have the same hashCode and will be brought to the same bucket. Initially book1 is added to the linked list. Then for book2 the HashTable will check if book1 is equal to book2 using the equals(Object) method in the Object class. This method uses the == operation which merely compares the object references and returns false. 
+So we need to overwrite this equals() method method as well
+eg public poolean equals(Object o){
+     return (year ==(((Book)o).getYear())) && author == (((Book)o).getAuthor())) && title ==(((Book)o).getTitle()));
+}
+
+Thus, ALWAYS OVERRIDE hashCode() METHOD WHEN YOU OVERRIDE EQUALS
+ 
+
+
