@@ -3283,10 +3283,12 @@ Contains:
 - algorithmic classes eg Collections
 
 Core interfaces include:
-	Collection					Map
-List	Set		Queue				SortedMap
-	SortedSet	Deque
-
+______________________________                      _______________
+|	Collection	     |			    |	Map       |
+------------------------------			    ---------------
+|List	Set		Queue|			    |	SortedMap |
+|	SortedSet	Deque|                      ---------------
+|____________________________|
 Collection represents a collection of objects whilst Map represents a collection of key,value pairs.
 These interfaces allow us to define common protocols and thus give us the benefit of polymorphism which allows us to manipulate collections independently of implementation
 Commonly used implementations:
@@ -3900,5 +3902,328 @@ eg public poolean equals(Object o){
 
 Thus, ALWAYS OVERRIDE hashCode() METHOD WHEN YOU OVERRIDE EQUALS
  
+LinkedHashSet
+- a Set implementation which uses a HashTable and a LinkedList.
+- a HashSet does not preserve the insertion order however a doubly linked list can keep track of this
+- extends HashSet and nearly as fast too! Slight slowness is due to the expense of mainintaining a linked list
+  - search, insertion and deletion ~ O(1) just like HashSet
+- permits only one null element just like HashSet. 
+- internally uses a LinkedHashMap [HashSet uses HashMap]
 
+Typical Use Cases of LinkedHashSet
+- rapid search, insertion and deletion
+- insertion order is important
+- better than ArrayList for removeAll() and retainAll()
 
+LinkedHashSet is generally slightly slower than HashSet for most functions but it is faster when it comes to iteration
+  - this is because iteration of the LinkedHashSet is dependent on the size of the set ie the number of elements due to the use of the doubly linked list
+  - in the case of HashSet, the iteration is based on capacity ie number of buckets in the HashTable. Thus in a HashSet, the number of elements could be less than the capacity but iteration still depends on capacity. In LinkedHashSet, iteration only has to do with the number of elements due to the doubly linked list
+
+Set<String> hashSet = new HashSet<>();
+hashSet.add("Raj");
+hashSet.add("John");
+hashSet.add("Anita");
+System.out.println("hashSet: "+ hashSet); // hashSet: [John, Raj, Anita] insertion order not preserved in HashSet
+
+Set<String> linkedHashSet = new LinkedHashSet<>();
+linkedHashSet.add("Raj");
+linkedHashSet.add("John");
+linkedHashSet.add("Anita");
+System.out.println("linkedHashSet: "+	linkedHashSet); //linkedHashSet: [Raj, John, Anita] insertion order preserved in LinkedHashSet
+
+SortedSet and NavigableSet
+-subinterfaces of Set
+- recall that Set interface is all about uniqueness and fast lookup. SortedSet additionally provides the sorting capability
+- NavigableSet is a subinterface of sorted set.
+- sorting is a very important feature of any application
+- per Java 8 API here is the definition of SortedSet
+ 
+ public interface SortedSet<E> extends Set<E>{
+    //Range-view
+    SortedSet<E> subSet(E fromElement, E toElement);
+    SortedSet<E> headSet(E toElement);
+    SortedSet<E> tailSet(E fromElement);
+    
+    //Endpoints -return first and last elements
+    E first();
+    E last();
+    
+    //Comparator access
+    Comparator<? super E> comparator();
+    default Spliterator<E> spliterator();
+}
+
+subSet() method returns a subset of the original sorted set within the range fromElement - toElement (toElement is exclusive and will not be included in the return set)
+if fromElement == toElement, then an empty set is returned. The returned set is backed by the original set so any changes to that one are reflected in the original one. Any changes made in the original set will also reflect int the returned set.
+The returned set will throw an IllegalArgumentException if you try to insert an element into it which is beyond the range of the returned set [fromElement - toElement]
+headSet() returns a set of elements that are less that the input toElement
+tailSet() returns a set of elements that are greater than or equal to the input fromElement
+
+comparator() method returns a Comparator which helps to keep the elements in the SortedSet, sorted. If a Comparator is not used, the comparator() method returns null meaning that the elements are sorted in natural order.
+
+spliterator() - introduced in Java 8 and useful in splitting elements into partitions so we can process those partitions using separate threads.
+
+SortedSet also has methods that it inherits so these are not the only ones.
+
+NavigableSet
+	public interface NavigableSet<E> extends SortedSet<E>{
+	  //Closest matches
+	  E lower(E);	 // greatest element < E
+	  E floor(E);	 // greatest element <= E
+	  E ceiling(E);	 // least element >= E
+	  E higher(E);	 // least element > E
+	  
+	  //Iterators	 
+	  Iterator<E> iterator();
+	  Iterator<E> descendingIterator();
+	  NavigableSet<E> descendingSet();
+	  
+	  //Endpoints
+	  E pollFirst();
+	  E pollLast();
+	  
+	  //Range-view
+	  NavigableSet<E> headSet(E toElement, boolean inclusive);
+	}
+
+-can do everything that a SortedSet can do but also contains methods that return the closest matches for given search targets eg lower() method returns greatest element which is less than the target element, returns null if no such element is found.
+- descendingSet() returns the reverse view of the original set.
+- pollFirst() & pollLast - remove first or last element respectively and return it. Both return a null value if SortedSet is empty. These methods are identical to those in Queue and Deque interfaces.
+- rangeview methods are similar those in SortedSet with an extra boolean parameter to indicate whether the returned values should be inclusive of the toElement or not.
+
+TreeSet
+- a red-black tree-based implementation of NavigableSet interface. Internally uses a TreeMap just like how HashSet internally uses a HashMap.
+-TreeMap stores key-value pairs but since TreeSet has only elements, it will store the element as key and an empty Object as value -  key = element, value = new Object() (HashSet does the same)
+- TreeSet elements will be unique and sorted (unique because it is a Set and sorted as it extends NavigableSet (which in turn extends SortedSet)).
+- slightly slower than HashSet(O(1)) but still allows for fast lookup - O(log(n)) for add/remove/contains
+Set<String> list = new TreeSet<>();
+list.add("def");
+list.add("abc");
+list.add("111");
+System.out.println(list);  // [111, abc, def] (sorted)
+Recall that with HashSet the main concern is uniqueness and when using user-defined classes, this can be achieved by overriding the hashCode() method and the equals() method as well. With TreeSet the structure needs to be unique and fast as well but it also needs to be sorted. So there needs to be an order among the elements. There are 2 ways to do it:
+1. Natural ordering -> uses interface java.lang.Comparable
+2. use java.util.Comparator
+
+Comparable interface has only one method called compareTo(). This method will specify an int value to specify where to place the element. When a new element is being added to the TreeSet, the compareTo() method is evoked on it to compare it to existing elements in the Set eg newElement.compareTo(oldElement). If compareTo() returns a 0, then the elements are duplicates and no insertion is done. If compareTo() returns a negative number, then the current element should be placed before the existing one. If compareTo() returns a positive number, then the element should be placed after the existing one so we move on to compare it to the next element.
+Our user-defined class must implement Comparable and overwrite the compareTo method. This method will specify how the elements themselves need to be sorted. This is why it is called natural ordering as the rules of the ordering are specified by the elements themselves.
+
+Second approach with Comparator
+- here the sorting criteria comes from outside. You can create a new class that implements the Comparator interface. Override the int compare() method inside this class.
+Then we need to pass the Comparator inside of the declaration of our TreeSet
+eg Set<Book> books = new TreeSet<>(new TitleComparator());
+- the advantage of using a comparator is that you can change the Comparator that you pass into the Set declaration at runtime eg if one user wants to sort books by title, then you pass in the new TitleComparator() and if they want to sort by author, then you pass in the new AuthorComparator(). When you pass an actual algorithm at runtime it is called a strategy pattern.
+
+Other methods in NavigableSet interface (implemented in TreeSet)
+      NavigableSet<Integer> set = new TreeSet<>();
+      set.add(5);
+      set.add(23);
+      set.add(74);
+      set.add(89);
+
+      System.out.println("lower: "+ set.lower(74));			//5
+      System.out.println("floor: "+ set.floor(74));			//74
+      System.out.println("ceiling: "+ set.ceiling(74));			//74
+      System.out.println("higher: "+ set.higher(74));			//89
+
+      System.out.println("first: "+ set.first());			//5
+      System.out.println("last: "+ set.last());				//89
+
+      System.out.println("set: "+ set);				//[5,23, 74, 89]
+      NavigableSet<Integer> descendingSet = set.descendingSet();
+      System.out.println("descendingSet: "+ descendingSet);	//[89, 74, 23, 5]
+      NavigableSet<Integer> headSet = set.headSet(74, false); [false meanse we are excluding the toElement = 74]
+
+      System.out.println("headSet: "+ headSet); // [5, 23]
+      //we said that any subset from the Set is backed by the TreeSet itself
+      headSet.add(6);
+      System.out.println("set: "+ set);			//[5, 6, 23, 74, 89]      
+      System.out.println("headSet: "+ headSet); // [5, 6, 23]
+      // if element is outside the range should throw an exception. Here headSet is getting anything less than 74 so if we try headSet.add(75), we will get a run time exception.
+      
+//    changes made in the original set will show in subset.
+      SortedSet<Integer> subSet = set.subSet(5, 74);	//[5, 6, 23]
+      set.add(18);	 
+      System.out.println("subSet: "+ subSet);		//[5, 6, 18, 23]
+
+We have reached the end of the Collection hierrarchy, now onto the Map hierrarchy
+
+Map
+-Map hierarchy is the second hierarchy in the Collections framework.
+
+Map interface
+______________________________                      _______________
+|       Collection           |                      |   Map       |
+------------------------------                      ---------------
+|List   Set             Queue|                      |   SortedMap |
+|       SortedSet       Deque|                      ---------------
+|____________________________|
+
+-maps store key-value pairs and these are useful for fast lookup by key eg data cache
+-also called associative array
+- no duplicate keys, duplicate values are fine
+     1 key -> 1 value
+- null key & null values - implementation dependent - some allow 1 null key, others none. Some allow null values, others no.
+- Map comes with a skeletal implementation called AbstractMap. Implementations like HashMap extend this particular class. Note that there are other skeletal abstract implementations for other structures as well eg AbstractList, AbstractSet and AbstractQueue -> all 3 extend AbstractCollection
+-similar to Collection interface, the Map interface has operations of the basic and bulk type. Map interface does not have Array operations like the Collection interface. Instead it has Collection View Operations.
+- unlike Collection interface, Map does not extend the Iterable interface but the collection is still iterable
+
+Basic Operations
+      public interface Map<K, V> {
+        V put(K key, V value);
+        V get(Object key);
+        V remove(Object key);
+        boolean containsKey(Object key);
+        boolean containsValue(Object value);
+        int size();
+        boolean isEmpty();
+     }
+
+V put(K key, V value) adds a value into the map. If there is a value there, it will be overwritten and the old value is returned. If there was no value there, the new value is inserted and a null value is returned. However if the map implementation allows the addition of null values then we can not tell whether the return of a null value is because of there not being a prior element or if it is the return of the previous element. To distinguish these two cases, we can use the containsValue() method which returns true if the input value is present in the map
+get(Object key) returns the value associated with a given key. If there is no such key present, then a null is returned
+remove(Object key) removes the element with the matching key and returns its value. It returns null if the element was not found.
+containsKey(Object key) returns true if map contains the particular key
+containsValue(Object value) returns true if map contains the particular value
+size() returns the size of the map
+isEmpty() returns true if map is empty
+
+Bulk Operations
+     public interface Map<K, V>{
+        void putAll(Map<? extends K, ? extends V> m);
+	void clear();
+      }
+putAll(Map<? extends K, ? extends V> m) puts all the corresponding elements from the input map into the current one
+clear() method removes all the elements from the map.
+
+Collection View Operations
+	public interface Map<K, V> {
+	    Set<K> keySet();
+	    Collection<V> values();
+	    Set<Map.Entry<K,V>> entrySet();
+	    
+	    public interface Entry {
+	        K getKey();
+		V getValue();
+		V setValue(V value);
+	    }
+        }
+
+keySet() - returns all the keys present in the map. Thus is returns a Set<K>. If you want to remove some keys from the Set, you can use an Iterator on the returned Set and invoke the remove method on the iterator. Alternatively you can use Set methods like remove(), removeAll(), retainAll() and clear() HOWEVER you cannot invoke either add() or addAll() methods --> you will get an UnsupportedOperationException. Note the returned Set is backed by the original map so any changes made in the returned set will reflect on the map.
+values() returns a Collection<V> of all the values in the map. All the properties just discussed for the keySet() method will also apply to this method. Note that in the case of keySet(), a Set was returned but for values() a Collection is returned. This is because keys are unique and so can be returned in a Set whereas values can be duplicated and hence a Collection is returned.
+entrySet() is useful for iterating the map. It returns a Set view of all the mappings in the map and each mapping is an instance of an interface called Entry which is a nested interface within the map interface[ nested interfaces improve readability. It is only used by Map interfaces and so it would pollute the namespace. Someone looking at the code would think it was widely used if it was a general interface but when nested, one can easily tell that it is only to do with Map ]
+Each instance of Entry corresponds to a mapping in Map and so it stores both key K as well as value V providing methods like getKey() and getValue(). When iterating the map, these methods can also be invoked
+There is also a setValue(V value) which can be used to update a value in a particular mapping.
+EXERCISE GREAT CARE IF KEYS ARE MUTABLE OBJECTS. Ideally you should only use immutable objects as keys eg Strings. The reason is that if you are storing a mutable object as key, then you change the state of the object later, upon searching for that same key, the map may return a null value eg hash function's logic is dependent on the object's state, even if the mapping was to the same bucket.
+HashMap
+-O(1) for put(), get() and remove()
+- insertion order is not preserved
+- permits null values and one null key
+- not synchronized unlike legacy Hashtable class
+
+Map<String,Integer> map1 = new HashMap<>();
+map1.put("John", 25);
+map1.put("Raj", 29);
+map1.put("Anita", null);
+
+System.out.println(map1); // { John=25, Raj=29, Anita=null } //null value allowed
+map1.put("Anita", 23);
+System.out.println(map1); // { John=25, Raj=29, Anita=23 } //old value overwritten 
+
+System.out.println("Contains John? "+ map1.containsKey("John")); // true
+System.out.println("Value at key, John is "+ map1.get("John"); //25
+
+//iteration
+	//using keySet()...
+	Set<String> names = map1.keySet();
+	for(String name: names){
+		   System.out.println("Name: "+ name + ", Age: "+ map1.get(name));
+	}
+
+	//using entrySet() --> returns a set of all mappings
+	Set<Map.Entry<String, Integer>> mappings = map1.entrySet();
+	for(Map.Entry<String, Integer> map: mappings){
+          System.out.println("Name: "+ map.getKey() + ", Age: "+ map1.getValue();
+	 }
+
+//sets are backed by the map
+names.remove("Anita");
+System.out.println(map1); // { John=25, Raj=29}
+
+More complex HashMap
+- Map of <String, AnotherMap>
+Map<String, Map<String, Object>> userProfile = new HashMap<>();
+Map<String, Object> profile = new HashMap<>();
+profile.put("age", 25);
+profile.put("dept", "CS");
+profile.put("city", "New York");
+userProfile.put("John", profile);
+
+Map<String, Object> profile = new HashMap<>();
+profile.put("age", 29);
+profile.put("dept", "CS");
+profile.put("city", "New York");
+userProfile.put("Raj",	profile);
+
+Map<String, Object> profile1 = userProfile.get("John");
+int age = (Integer)profile.get("age");
+System.out.println("Age: "+ age);
+
+BE VERY CAREFUL WHEN USING MUTABLE KEYS
+Let's see this by creating a map with a List as the key. The List will give us a suitable mutable key
+List<Integer> list = new ArrayList<>();
+list.add(1);
+Map<List<Integer>, Integer> map = new HashMap<>();
+map.put(list, 10)
+System.out.println(map.get(list)); // returns 10 which is the value at key=list
+// now we mutate the key
+list.add(2);
+System.out.println(map.get(list)); // returns null
+
+This is because when you we ran map.put(list, 10), the hash function was run on the particular hashCode that list had at that time. After adding a new element to list and changing its structure, when we run map.get(list), the list.hashCode() which is input to the hash function will return a different hashCode from the previous one and so we will search in the wrong bucket. 
+Some structures have hashCode functions that only use the memory address location for their hashCode() functions but if the class is overriding this default hashCode() function as in the case of ArrayList, then this will affect the proper functioning of the mapping. The equals function also needs to be checked since it is used to do the comparison with each key to see if the item has been found.
+
+LinkedHashMap
+When we discussed HashSet and later LinkedHashSet, we saw that HashSet does not preserve insertion order but LinkedHashSet extends a HashSet and preserves insertion order and is also almost as fast as a HashSet.
+Similarly in the Map implementations, HashMap does not preserve insertion order while LinkedHashMap which extends HashMap does preserve order with about the same speed.
+In Set implementations we have the HashSet and its subclass LinkedHashSet whereas in Map implementations we have HashMap and its subclass LinkedHashMap.
+We know that internally HashSet uses a HashMap and LinkedHashSet uses a LinkedHashMapKey points
+-LinkedHashMap is a hash table & linked list implementation of Map interface
+- preserves insertion order - doubly linked list 
+- extends HashMap - nearly as fast too!
+  - rapid lookup, insertion and deletion ~ O(1) [slight expense due to list ]
+- permits null values & one null key
+- not synchronized 
+
+iteration(LinkedHashMap) faster than iteration(HashMap)
+- because iteration with LinkedHashMap depends on the size of the map
+whereas iteration with the HashMap depends on the capacity
+
+LinkedHashMap can be used as LRU Cache --> Least Recently Used Cache. Most heavily-trafficked websites cache a lot of data. memcached is a very popular in-memory caching system that these websites make use of. Such data is stored in RAM for fast access.
+LRU Cache
+- uses least recently used caching strategy ie one end of cache is least recently used item and the other has the most recently used item -> items are ordered according to how recently they were used. 
+- if cache is full, the least recently added item on the list is removed/evicted
+- if you are searching for an item and it is on the cache, it is called a cache hit. Otherwise it is called a cache miss. We then try to find the item in the database and if found, it will be moved into the cache.
+Note that the LRU Cache is only a feature of LinkedHashMap. It does not apply ot LinkedHashSet although LinkedHashSet internally uses a LinkedHashMap
+
+You can specify the size of the LRU cache by creating a subclass since by default the LinkedHashMap does not have a default size for the cache.
+
+Map<String, String> lruCache = new LinkedHashMap<>(16, 0.75f, false);
+lruCache.put("a", "A");
+lruCache.put("b", "B");
+lruCache.put("c", "C");
+System.out.println(lruCache); //[a=A, b=B, c=C]
+lruCache.put("d", "D");
+lruCache.put("e", "E");
+// to create a cache we need to override the removeEldestEntry() function and give it a max size
+
+public class LRUCache<K, V> extends LinkedHashMap<K,V>{
+       private static final MAX_ENTRIES = 3;
+       
+       public LRUCache(Int initialCapacity, float loadFactor, boolean accessOrder){
+          super(initialCapacity, loadFactor, accessOrder);
+       }
+
+       public boolean removeEldestEntry(Map.Entry eldest){
+        return size() > MAX_ENTRIES;
+       }
+}
