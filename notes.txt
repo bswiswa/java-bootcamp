@@ -3887,9 +3887,9 @@ set2.add(book1);
 set2.add(book2);
 System.out.println(set2); // assuming Book has a custom toString() method
 			  // both book1 and book2 are added to the set even though they are logically equal. We need to set up the HashSet some more to prevent this
-We know that HashSet internally uses HashMap which is based off of HashTable. HashTable uses a hash function in order to move into the HashTable and find the correct bucket number. In this case, if the second element is a duplicate then it needs to have the same hashCode() as the other one. In the case above, both of these objects will have different hashCodes(). The hashCode() method is defined in the collection class and it returns the memory address of a given object after returning it as an int.
+We know that HashSet internally uses HashMap which is based off of HashTable. HashTable uses a hash function in order to move into the HashTable and find the correct bucket number. In this case, if the second element is a duplicate then it needs to have the same hashCode() as the other one. In the case above, both of these objects will have different hashCodes(). The hashCode() method is defined in the collection class and it returns the memory address of a given object returning it as an int.
 In our code above book1 and book2 are different objects so they have 2 different memory addresses and thus if we run the hashCode() method on them we get different values.
-We need to overwrite the hashCode() method so it returns the same value for identical objects eg
+We need to override the hashCode() method so it returns the same value for identical objects eg
 public int hashCode(){
        return title.hashCode();
 }
@@ -3901,7 +3901,7 @@ eg public poolean equals(Object o){
 }
 
 Thus, ALWAYS OVERRIDE hashCode() METHOD WHEN YOU OVERRIDE EQUALS
- 
+
 LinkedHashSet
 - a Set implementation which uses a HashTable and a LinkedList.
 - a HashSet does not preserve the insertion order however a doubly linked list can keep track of this
@@ -4545,4 +4545,272 @@ Arrays
 
 Collections
 - addAll, sort, binarySearch, reverse, swap, shuffle, unmodifiableCollection
+
+Generics
+-introduced in Java 5
+Motivation
+Polymorphism promotes generalization eg supertypes can be used as polymorphic types for methods, parameters and return types. This allows us to pass subclass objects as arguments and return types.
+Interfaces provide even more generalization as they can be implemented by classes coming from completely different hierrarchies.
+-prior to Java 5, using Object class as a paremeter in functions was very common. eg prior to Java 5, the add() method used Object as a parameter, now it uses Generics
+What problems can we run into with using Object as type?
+We want to create a class Store that is capable of storing data for multiple types of objects of classes from different hierarchies eg Date, Car, Bookmark, Movie, Food etc. Let's assume that the only superclass that objects from these classes have in common is Object.
+We can start off by having:
+ class Store{
+       private Object a;
+        
+       public void set(Object a){
+          this.a = a;
+       }
+       
+       public Object get(){
+         return a;
+       }
+   } 
+
+Now lets say we have a programmer John want to create a store for Dates and he does so in the following way:
+Store store = new Store();
+store.set(new Date());	//java.util.Date
+...
+Date date = (Date) store.get();	// cast
+
+Here a store instance is created and a Date object is stored within the Store instance. Note that here the Date class is from the java.util package. Later the Date object that was stored inside the date object is being retrieved but since the return type of the get() method is of type Object, we have to apply a cast on the returned object in order to get our desired Date object.
+
+Let's assume that another developer Anita executes her code next on the store instance:
+
+store.set(new Date()); //java.sql.Date
+
+Her code resets the Date object but her code creates an instance of the java.sql.Date class.
+Later John executes the following code on the same store instance:
+
+Date date = (Date) store.get(); //casting to java.util.Date
+
+He will get a ClassCastException as the object is now of class java.sql.Date rather than java.util.Date
+
+This is a problem we have when Object is used as a polymorphic type. 
+- too generic - allows too many different instances to be stored in it
+- you always need to use explicit casting on the objects returned to downcast them to the appropriate type
+- unpleasant exceptions not caught until runtime. The generic objects will pass through compilation but will fail when the methods invoked on them are unsupported
+
+Language designers introduced the generics feature so that such problems could be caught at compile-time. Generics are a purely compile-time concept.
+
+The class Store is now rewritten using Generics:
+
+class Store <T> {
+  private T a;
+
+  public void set(T a){
+    this.a = a;
+
+    }
+
+  public T get(){
+    return a;
+  }
+}
+
+Here T is a type parameter.
+John's code will now look like this
+
+Store<Date> store = new Store<Date>();	//java.util.Date
+store.set(new Date());
+...
+Date date = store.get();	// no casting
+
+Next, if Anita tries to set the store object's Date variable using Date from the java.sql package...
+
+store.set(new Date()); //compile error notifies her that that particular store instance can be passed only Date objects from the java.util package as was done by John
+
+Thus by using a generic, we prevent runtime exceptions and we enforce type safety at compile time itself before we even get to run time
+
+Another programmer Raj could use that Store class later to create another object with a different hierarchy and we can handle it with no issues
+eg Store<Book> bookStore = new Store<Book>();
+   store.set(new Book());
+
+-with Generics we get the benefit of type-safety at compile time itself
+-we have cleaner code
+-code is more expressive - developer explicitly states what type of classes will be used
+- generics give us a lot of flexibility - this is similar to using Object as a type but with the advantage of type-safety.
+
+Generic & Parameterized Types
+Generic Type
+-a class or interface with type parameters
+   class ClassName <T1, T2, T3, ...> { ... }
+-within the class, type parameters can be used as type of instance variables or types of method parameters, local variables and return types
+eg class Store <T> {
+  private T a;
+
+  public void set(T a){
+    this.a = a;
+
+    }
+
+  public T get(){
+    return a;
+  }
+}
+
+T is used as an instance variable type, method parameter and return type in the above generic type.
+Parameterized type
+ class Store<T>{...} --> generic type with type parameter/formal type parameter T
+	|
+	|
+Store<String> stringStore = new Store<String>();
+Store<Date> dateStore = new Store<Date>();
+Store<List<Date>> dateListStore = new Store<List<Date>>();
+Store<Book> bookStore = new Store<>();
+
+Store<String> is an example of a parameterized type. Here String is referred to as type argument or actual type parameter
+In the first 3 instance creation we have the type argument on both sides but on the last one we have it only one one side. This is called Diamond notation and it works from Java 7 onwards. In this case, type is automatically inferred based on the type specified on the left hand.
+
+Type Parameter Naming Conventions
+- use single, uppercase letters
+E - Element(Collections)
+K - Key, V - Value (if you are writing a Map)
+N - Number
+T - Type (usually in non-collections)
+S, U, V - 2nd, 3rd, 4th types
+
+You can use any valid Java identifier but it is more helpful to standardize expectations by sticking to this convention.
+
+Subtyping of Generic Types
+
+interface Container<T>{
+  void set(T a);
+  T get();
+}
+
+class Store<T> implements Container<T>{
+      private T a;
+      
+      public void set(T a){
+        this.a = a;
+      }
+
+      public T get(){
+        return a;
+      }
+}
+
+we can now say Container<String> store = new Store<>();
+
+Multiple Type Parameters
+public class Store <K, V> {
+       private K key;
+       private V value;
+       
+       public Store(K key, V value){
+         this.key = key;
+	 this.value = value;
+       }
+       
+       public K getKey(){
+         return key;
+       }
+       
+       public V getValue(){
+         return value;
+       }
+}
+
+Restrictions
+- type argument cannot be primitive
+       eg Store<int> intStore = new Store<int>(); //compiler error
+- type parameter cannot be used in a static context
+       eg public class Device<T>{
+             private static T deviceType;
+	  }
+Why is it illegal in a static context?
+developer 1 runs:    Device<Smartphone> phone = new Device<>();
+developer 2 runs:    Device<Pager> pager = new Device<>();
+Question is what would T be after these two statements are executed? Smartphone or Pager?
+developer 1 is assuming that static type will stay static as Smartphone since it ran first
+developer 2 is assuming that static type is updated to Pager since it ran most recently
+- type parameter thus cannot be used in a static method or static initializer.
+
+What happens under the hood when using generics
+Generics is a purely compile-time feature. At run-time there are not generics. It means that the compiler uses a feature called Type Erasure to remove all type arguments eg T and just represent the generic types without the types eg
+eg class Store <T> {
+  private T a;
+
+  public void set(T a){
+    this.a = a;
+
+    }
+
+  public T get(){
+    return a;
+  }
+}
+
+becomes...
+eg class Store {
+  private Object a;
+
+  public void set(Object a){
+    this.a = a;
+
+    }
+
+  public Object get(){
+    return a;
+  }
+}
+
+next, the compiler inserts explicit casts wherever the objects based from generics are used. Thus our code will look clean but behind the scenes, the compiler will bring back all the casts needed to ensure proper functioning.
+
+Bounded Type Parameter
+-generic types give the client the power to instantiate the generics with classes of their choosing but sometimes we might want to put some restrictions on what type they can pass in whilst instantiating the generic code.
+- this is where bounded type parameters come in handy
+- a bounded type parameter is a type parameter with 1 or more bounds
+
+<TypeParameter extends bound1 & bound2 & ...> { ... }
+
+eg class Generics Demo <T extends List> { ... }
+This means that the type parameter has to be List or one of its subtypes.
+Thus for this generic type, we could have:
+     GenericsDemo<List> test = new GenericsDemo<>();
+OR   GenericsDemo<ArrayList> test = new GenericsDemo<>();
+OR   GenericsDemo<LinkedList> test = new GenericsDemo<>();
+BUT NOT GenericsDemo<Collection> test = new GenericsDemo<>(); --> Thus in this way we have restricted the possible type parameters possible for our GenericsDemo class.
+Bounded Type parameters also allow its class to access the methods defined by it
+
+eg class GenericsDemo<T>{
+      void go(T list){
+        int i = list.size()
+      }
+}
+
+We get a compiler error here because the compiler does not know whether the chosen type would include the size() method.
+But if we use a bounded type parameter where T extends the List interface, we have no problem as any type that extends List will have the size() method:
+
+class GenericsDemo<T extends List> {
+      void go(T list){
+        int i = list.size();
+      }
+}
+
+Note that the method has to be present for the entire bound. If it is only a method specific to one of its subtypes, we get a compiler error.
+Recall that under the hood, during type erasure, the compiler will replace the type parameter with the Object class but that only happens for an unbounded type parameter. In the case of a bounded parameter type, the compiler will replace the type parameter with the bound itself.
+
+Valid Bounds
+- Class	
+- Interface
+- enum
+- Parameterized type eg <T extends Comparable<T>>
+
+Note that we use the keyword "extends" in all cases regardless of whether the bound is a class or interface or other.
+
+Invalid Bounds
+- primitives
+- arrays
+
+Specifics
+- type argument must be subtype of all bounds
+  eg class GenericsDemo <T extends List & Serializable>
+  Generics<List> test = new GenericsDemo<>(); // compile error as List is not a subtype of Serializable
+  GenericsDemo<ArrayList> test = new GenericsDemo<>(); // valid as ArrayList is a subtype of both List and Serializable
+
+-if class is one of the bounds, it must be specified first
+-if first bound is a class, then remaining bounds must be interfaces ie YOU CAN NOT HAVE MORE THAN ONE CLASS IN THE LIST OF BOUNDS - no restrictions on interfaces
+- if bound is final class or enum, then the type argument is the bound itself - this is because final classes cannot have subtypes and enum is essentially a final class too.
 
