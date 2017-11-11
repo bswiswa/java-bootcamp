@@ -4227,3 +4227,322 @@ public class LRUCache<K, V> extends LinkedHashMap<K,V>{
         return size() > MAX_ENTRIES;
        }
 }
+
+Just like in Collection hierarchy with the SortedSet and NavigableSet, there is also the SortedMap and NavigableMap in  the Map hierarchy
+______________________________                      _______________
+|       Collection           |                      |   Map       |
+------------------------------                      ---------------
+|List   Set             Queue|                      |   SortedMap |
+|         |               |  |                      |       |     |
+|         |               |  |                      |       |     |
+|      SortedSet        Deque|                      | NavigableMap|
+|         |                  |                       ---------------
+|         |                  |
+|      NavigableSet          |
+|____________________________|
+
+SortedMap
+-allows sorting of mappings based on keys
+-Natural ordering by keys implementing the Comparable interface or by passing a Comparator during declaration
+
+public interface SortedMap<K,V> extends Map<K,V>{
+//Range-view
+SortedMap <K,V> subMap(K fromKey, K toKey);
+SortedMap<K,V> headMap(K toKey);
+SortedMap<K,V> tailMap(K fromKey);
+
+//Endpoints
+K firstKey();
+K lastKey();
+
+//Comparator access
+Comparator<? super E> comparator();
+
+//Collection view operations
+Set<K> keySet();
+Collection<V> values();
+Set<Map.Entry<K,V>> entrySet();
+}
+ Note that the methods are very similar to the ones in SortedSet. Except in SortedSet we were working with elements but here we have keys.
+subMap(K fromKey, K toKey), headMap(K toKey) and tailMap(K fromKey) all return a sorted map  which is backed by the original map. These methods are specific to SortedMap.
+We also have a comparator() function whicch returns a Comparator if there is one otherwise it returns null
+
+keySet(), values() and entrySet() are Collection view operations
+- keySet() returns the set of all keys, ordered according to the sorting criteria. Note that it returns a Set since keys are unique
+- values() returns all the values ordered according to the sorting criteria. Note that it returns a Collection since duplicates are permitted.
+-entrySet() returns all the mappings in the SortedMap sorted by keys. Each mapping is an instance of the Entry interface which is a nested interface defined within the Map interface.
+**All 3 of these collection view methods are backed by the original map so any changes made in the returned view will be reflected in the original map and vice versa. You can remove elements using the collections returned in these methods but you cannot add anything to the original map through them as they are collections of elements rather than a collection of mappings. Even the set returned by entrySet() does not permit add operations and if you try to add something it will throw an UnsupportedOperationException
+
+public interface NavigableMap<K,V> extends SortedMap<K,V>{
+//closest matches
+K lowerKey/floorKey/ceilingKey/higherKey(K key);
+Map.Entry<K,V> lowerEntry/floorEntry/ceilingEntry/higherEntry(K key);
+
+NavigableSet<K> descendingKeySet();
+NavigableMap<K,V> descendingMap();
+
+//endpoints
+Map.Entry<K,V> pollFirstEntry();
+Map.Entry<K,V> pollLastEntry();
+
+//range-view
+NavigableMap<K,V> headMap(K toKey, boolean inclusive);
+}
+
+descendingKeySet() returns a reverse view of the keys in the map. It is returned as a NavigableSet
+descendingMap returns a reverse view of the mappings in the map. It returns a NavigableMap
+pollFirstEntry() and pollLastEntry() remove and return the first and last mappings respectively.
+headMap(K toKey, boolean inclusive) returns a map whose values are less than (if inclusive = false) or less than or equal (inclusive = true) to the toKey parameter. 
+
+TreeMap implements the NavigableMap and supports operations such as containsKey(), get() and remove() with O(log n) complexity
+TreeMap<String, Integer> map1 = new TreeMap<>();
+
+map1.put("John", 25);
+map1.put("Raj", 29);
+map1.put("Anita", 23);
+
+System.out.println(map1); // { Anita=23, John=25, Raj=29 } //automatically sorted according to keys
+Set<Map.Entry<String, Integer>> mappings = map1.entrySet();
+for(Map.Entry<String, Integer> mapping: mappings){
+	System.out.println("Name "+ mapping.getKey() + ", Age: "+ mapping.getValue());
+	if(mapping.getKey().equals("John")){
+	  mapping.setValue(26);
+	} //show that you can make changes to the map during iteration
+}
+
+Note that entries returned by the following methods are just snapshots of the mappings at that particular time. They cannot be used to setValue() on the actual mapping. You will get an UnsupportedOperationException. These methods are Map.Entry<K,V> lowerEntry/floorEntry/ceilingEntry/higherEntry()
+
+Arrays Class
+- is a generic utility class and helps us manipulate arrays in many ways. It has methods to help us convert an Array into an ArrayList. It also has methods to help sort an Array, search for an element or compare arrays.
+- most methods have overloaded versions for different primitive or object types
+Arrays.asList(T[] arr) --> takes an input array and returns a List<T> - ArrayList of type T and fixed size. THIS FIXED SIZE ARRAY LIST HAS ITS LIMITATIONS. You cannot remove or add an element to a fixed size list --> UnsupportedOperationException. You can however update the value of the returned ArrayList and this would reflect in the original array too
+Arrays.toString(T[] arr) returns a String representation of the contents of an array
+If you want to create a modifiable ArrayList from an array, you can pass the fixed ArrayList as a parameter in a new ArrayList() declaration
+eg List<String> strings = new ArrayList(Arrays.asList(strArray));
+The .asList(T[] arr) takes an array as input but it also accepts comma separated lists or varargs as input eg asList("Raj", "Anita")
+-if we just want to create an array of fixed size without an input array we can do:
+List<String> fixedList = Arrays.asList(new String[3])); //returns an ArrayList of nulls. Other constructors of ArrayList start off with a default size but will increase size when capacity is reached. The Arrays.asList gives us the ability to make a fixed size ArrayList.
+Arrays are not autoboxeable so if we want to create an array of Integers, the following will not work:
+       List<Integer> fixedList = Arrays.asList(new int[2]);
+int[2] cannot be automatically boxed to Integer. We have to do:
+       List<Integer> fixedList = Arrays.asList(new Integer[2]);
+The following would work though:
+    List<int[]> fixedList2 = Arrays.asList(new int[2]);
+-> this creates an ArrayList with only one element. That element would be an int array of size 2
+
+   System.out.println(fixedList2.size()); // 1
+- sort - 2 methods here one is void sort(Object[]) and void sort(T[] a, Comparator <? super T> c). 
+sort(Object[])
+sort(Object[]) uses merge-sort algorithm with natural ordering meaning that the type of the array elements should have implemented the Comparable interface
+- Partially sorted array: far fewer than nlog(n) comparisons
+- Almost sorted: approximatley n comparisons where n is the array size
+
+Arrays.sort(strArray);
+
+System.out.println(Arrays.toString(strArray));
+-it is suitable for merging 2 or more sorted arrays - concatenate the arrays and sort the resulting array.
+- if it is an array of primitives, the sort method will use a quick-sort algorithm
+eg int[] iArray = {23, 34, 4, 59 };
+Arrays.sort(iArray);
+System.out.println(Arrays.toString(iArray));
+
+sort(T[] a, Comparator<? super T> c)
+- takes a Comparator and uses the comparator to sort the elements.
+
+Binary Search: int Arrays.binarySearch(int[] inputArray, int searchValue)
+-returns index if element is found
+-otherwise it looks at the index where the element could be inserted, negates it, subtracts 1 from it and returns the result ie it returns -(insertion point) - 1
+-input array must be sorted, otherwise behavior is undefined - this depends on the particular JVM implementation as some implementations still work even with unsorted arrays.
+
+eg System.out.println("index returned by binary search: "+ Arrays.binarySearch(new int[]{4, 23, 59}, 4)); // returns 0
+System.out.println("index returned by binary	search:	"+ Arrays.binarySearch(new \
+int[]{4, 23, 59}, 5)); // returns -2 since 5 is not in the array to be searched, so the program also checks its possible insertion point = 1, negates it (-1) and subtracts 1 from it = -1-1 = -2
+
+T[] Arrays.copyOf(T[] a, int length) - copy input array to a new array of a specified size. If there are any empty spots, they will have a default value in them.
+eg int[] newArray = Arrays.copyOf(new int[]{1,2,3}, 5);
+System.out.println(Arrays.toString(newArray)); // [1, 2, 3, 0, 0]
+
+The System class also has an arraycopy method
+System.arraycopy(T[] sourceArray, int startCopyingIndex, T[] destinationArray, int destinationArrayCopyStartPosition, int numberOfElementsToCopy)
+
+void Arrays.fill(T[] arrayToBeFilled, T elementToFillAllIndices)
+eg int[] newArray = new int[5];
+   Arrays.fill(newArray, 13);
+   System.out.println(newArray); //[13, 13, 13, 13, 13]
+
+boolean Arrays.equals(T[] arr1, T[] arr2)
+System.out.println("Equals? "+ Arrays.equals(iArray, newArray));
+-equals() returns true if both arrays are of same type, size and have exact same contents. Can only work with arrays of 1 dimension.
+
+boolean Arrays.deepEquals(Object[], Object[]);
+-appropriate for multidimensional arrays
+-returns true if arrays are deeply equal to one another
+- note that the method takes two arrays of Objects (Object[], Object[])
+eg int[][][] deepArray1 = { { {1,2,3}, {4,5,6} } };
+   int[][][] deepArray2 = { { {1,2,3}, {4,5,6} } };
+   System.out.println("Deep Array Equals? "+ Arrays.deepEquals(deepArray1, deepArray2)); //true
+   int[][] deepArray3 = { {1,2,3} };
+   int[][] deepArray4 = { {1,2,3} };
+   System.out.println("Deep Array Equals? "+ Arrays.deepEquals(deepArray3, deepArra\
+y4)); //true
+
+   int[]deepArray3 = {1,2,3};
+   int[]deepArray4 = {1,2,3};
+   System.out.println("Deep Array Equals? "+ Arrays.deepEquals(deepArray3, deepArra\
+\
+y4)); //compilation error because int[] is not an array of objects, it is just an object.
+Parallelized Operations
+-introduced in Java 8. If your system has multiple cores, it will be much more efficient as it can do things in parallel
+int[] iArray = {23, 4, 99};
+Arrays.parallelSort(iArray);
+System.out.println("parallel sort: "+ Arrays.toString(iArray));
+- this method is beneficial for large arrays. Minimum size size 1 << 13 (equivalent to 2^13) = 8192
+
+Arrays.parallelPrefix(int[] arr, IntBinaryOperator op)
+- cumulates each element of the given array in place using the supplied function. It is usually more efficient than sequential loops for large arrays.
+- IntBinaryOperator is a functional interface to which we can pass an implementation or a lambda
+  class IntBinaryOperatorImpl implements IntBinaryOperator {
+  	public int applyAsInt(int left, int right){
+	       return left + right;
+        }
+ }
+
+IntBinaryOperatorImpl IntBinaryOperatorImp = new IntBinaryOperatorImpl();
+Arrays.parallelPrefix(iArray, IntBinaryOperatorImp);
+
+Arrays.parallelSetAll(int[] arr, IntUnaryOperator generator)
+- sets all elements of a given array in paralle using the provided generator function to compute each element.
+
+class IntUnaryOperatorImpl implements IntUnaryOperator{
+      int[] iArray;
+      
+      public void setArray(int[] iArray){
+        this.iArray = iArray;
+      }
+      
+      public int applyAsInt(int i){
+        if(iArray != null){
+	  return iArray[i] + 5;
+        }else{
+	   return i;
+	}
+}
+
+IntUnaryOperatorImpl intUnaryOperatorImpl = new IntUnaryOperatorImpl();
+intUnaryOperatorImpl.setArray(iArray);
+Arrays.parallelSetAll(iArray, intUnaryOperatorImpl);
+
+
+Collections Class
+- we have looked at many different data structures but we need a class to manipulate all those data structures. For that we have the Collections class.
+Not to be confused with the Collection interface.
+- This class however is similar to the Arrays class in that it is also a utilities class with lots of static methods.
+
+static boolean addAll(Collection<? super T> c, T...elements);
+adds all elements inside an array to a Collection
+eg we have our collection as a List:
+   List<String> list = new ArrayList<>();
+   list.add("Raj");
+   list.add("John");
+   list.add("John");
+
+   String[] array = { "Batsi", "Ruva"};
+//without using Collections
+   //make array into list then use list.addAll()
+   list.addAll(Arrays.toList(array));
+//using Collections
+   Collections.addAll(list, array); // cleaner and faster
+
+static <T extends Comparable<? super T>> void sort(List<T> list)
+Collections.sort(list); //elements must implement Comparable for natural sorting
+
+<T> int binarySearch(List<? extends Comparable<? super T>> list, T key)
+- takes in a List collection[only] and searches for the key.
+System.out.println("What index is John in the list? : "+ Collections.binarySearch(list, "John");
+-needs to be sorted. O(log(n))
+-if not sorted results are undefined. Might perform an inefficient linear search
+- for Sets: HashSet ~ O(1). TreeSet ~ O(log(n)), ie same efficiency as binary search
+-note List.contains is O(n)
+
+
+<T> int binarySearch(List<? extends T> list, T key, Comparator<? super T> c)
+- this is a binary search alternative that takes in a Comparator
+
+//other methods
+Collections.reverse(list);
+Collections.shuffle(list);
+Collections.max(list);
+Collections.min(list);
+Collections.swap(list, 0, 3);
+Collections.frequency(list, "John");
+
+//Singleton ~ <T> Set<T> singleton(T o)
+returns an immutable set containing only the specified object
+- other: <T> List<T> singletonList(T o) & <K, V> Map<K,V> singletonMap(K key, V value)
+list.removeAll(Collections.singleton("John")); //this gives us a cleaner way to delete an element from a collection rather than first creating a list of that element then using list.removeAll(). The other way would be to loop through the list then delete the item using an iterator.
+singletonMap(K key, V value) returns a single mapping which can be used to delete that point from the map in a cleaner way.
+
+Unmodifiable View - provides clients with read-only access to internal collection
+      Collection<String> unmodifiable = Collections.unmodifiableCollection(list);
+      System.out.println("unmodifiable: "+ unmodifiable);
+      System.out.println("Is Anita there?: "+ unmodifiable.contains("Anita"));
+      unmodifiable.add("Vincent"); // UnsupportedOperationException
+- you can add something to the list and that element will be added to the returned collection
+
+Best Practices
+RETURN EMPTY COLLECTION OR EMPTY ARRAYS NOT NULLS
+-if your method returns a collection or an array, return the empty versions rather than null
+WRITE GOOD PROGRAMS WITH GOOD DESIGN PRINCIPLES EG INFORMATION HIDING. IF PERFORMANCE IS AN ISSUE IT CAN ALWAYS BE OPTIMIZED LATER
+
+eg returning empty array
+private static final String[] EMPTY_ARRAY = new String[0];
+
+public String[] getBookTitlesByAuthor(String author){
+    List<String> titles = dao.getBookTitlesByAuthor(author);
+    return titles.toArray(EMPTY_ARRAY);
+}
+
+//returning the same empty immutable Collection
+
+public List<String> getBookTitlesByAuthor(String author){
+   List<String> titles = dao.getBookTitlesByAuthor(author);
+   if(titles.isEmpty()){
+     return Collections.emptyList();
+   }
+
+   return titles;
+}
+
+-there are other similar methods like emptyMap() or emptySet();
+-to check whether collection is empty, use the isEmpty() method rather than calling on the size
+
+SUMMARY OF COLLECTIONS
+When to use Which Collection?
+Collection interface hierrarchy
+List: 
+- when sequence or position matters
+  -ArrayList: fast random access, appending or deleting last item
+  -LinkedList: if there are frequent add/remove operations during iteration
+Queue
+- when fast head/tail manipulations matter
+  -ArrayDeque: recommended over LinkedList when it comes to Deque implementation. LIFO & FIFO operations in O(1). 3X better than LinkedList for large queues
+Set
+- when uniqueness and fast lookups matter
+  -HashSet: very fast lookup, insertion and deletion - O(1). ALWAYS OVERRIDE hashCode() METHOD WHEN YOU OVERRIDE EQUALS
+  -LinkedHashSet: preserves insertion order and almost as fast as HashSet
+  -TreeSet: - if we need elements sorted and still fast O(log(n))
+  - both HashSet and TreeSet extend the AbstractSet class.
+
+Map interface hierrarchy
+-HashMap - fast lookup, insertion and deletion - O(1)
+-LinkedHashMap (LRU Cache) - preserve insertion order and almost as fast as HashMap
+-TreeMap - keeps elements sorted and fast to retrieve O(log(n))
+-both HashMap and TreeMap extend AbstractMap
+
+Algorithm Classes - static utility classes
+Arrays
+- asList, sort, parallelSort, binarySearch, copyOf, equals
+
+Collections
+- addAll, sort, binarySearch, reverse, swap, shuffle, unmodifiableCollection
+
