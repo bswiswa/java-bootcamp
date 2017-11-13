@@ -4814,3 +4814,81 @@ Specifics
 -if first bound is a class, then remaining bounds must be interfaces ie YOU CAN NOT HAVE MORE THAN ONE CLASS IN THE LIST OF BOUNDS - no restrictions on interfaces
 - if bound is final class or enum, then the type argument is the bound itself - this is because final classes cannot have subtypes and enum is essentially a final class too.
 
+DON'T USE RAW TYPES IN NEW CODE
+Generic type without type argument eg List list = new ArrayList(); List is a generic type but it has been instantiated here without a type argument --> so we have a raw type here
+another example is: void go(List list){ ... } -> in this case the method parameter is a raw type
+The problem with using a raw type is we would have the same problem we had before generics were introduced ie compile-time type safety is lost. Thus we may now again run into runtime exceptions due to this.
+eg if we have a list List<Double> prices = new ArrayList<>(); and we have a function that uses our list but makes the mistake of using a raw type 
+eg void getPrice(long itemNumber, Long prices)
+   {
+    int p; 
+   if(itemNumber == 12345L){
+      p = 10;
+   }else{
+      p = 5;
+   }
+   prices.add(p);
+}
+In the function getPrice, the type for prices is raw and so when we try to add integers into it, it works because the by the parameters specified for the List it is valid.
+However outside of this function, if we try to retrieve the value we will have a problem. Since we expect that prices is a List<Double> we will assume that every value in prices is a Double. And so:
+ Double myPrice = prices.get(0); // this causes a ClassCastException as the value in prices at index 0 is an int and cannot be implicitly cast to Double. So using raw type is dangerous.
+
+Why is Raw Type Supported
+- interoperability with legacy code. Generics were introduced almost a decade after Java was created. So there is a lot of code out there using Collection types as types for method parameters and they all have to work with the new code. However in new code, you must not use raw types.
+There are however  some instances when you should use raw type:
+- Class literals which return the corresponding class object eg it is List.class not List<String>.class - parameterized type is invalid
+- we must use raw type when using the instanceof operator
+if(o instanceof Set) {...} ---> good
+if(o instanceof Set<String>){...} ---> compiler error
+
+Unbounded Wildcard
+For scenarios where we do not know what the type is and we do not care.
+A generic type, through its type parameter indicates that it can be instantiated with an unknown type. eg class Store<T>{...} can be instantiated using parameterized types like void foo(Store<String> stringStore){...} or void bar(Store<Integer> intStore) {...}
+A parameterized type, like a generic type can also indicate that its type argument is of an unknown type. This is done by using a wildcard eg 
+  	void go(Store<?> someStore){...}
+The ? symbol here is a wildcard. This wildcard is an unbounded wildcard
+- the wildcard ? can only be used as a type argument, it cannot be used as a type parameter eg class Test<?, ?>{ private ? a; }
+Inside of the class Test, what does the ? in private ? a refer to? The first or second parameter?
+Common Usage
+-type of method parameters eg void go(Store<?> someStore){...}
+- it can also be used in assignment statements but this is very rare eg
+  Store<String> strStore = new Store<>();
+  Store<?> someStore = strStore;
+- since wildcard generifies a parameter argument, then why not use Object as type argument instead of ? since Object is the most generic class as it is the superclass of all classes. The limitation is that you can only assign an instance that also has Object as type argument:
+  Store<Object> someStore = new Store<Object>();
+  
+This is due to a property called invariance. It applies to not just Object type but any type like String or Integer. If it is Store<String>, you can only assign a store of String(eg new Store<String>()). But if we use the wildcard ? we can assign a store of any kind eg 
+Store<?> someStore = new Store<String>();
+OR Store<?> someStore = new Store<Integer>();
+
+Compiler's type safety restriction
+- cannot invoke methods that use class-level parameters with any arguments except null. We cannot invoke any methods on the parameterized type when those methods use the type parameter of the class in the method parameter. The only way we can invoke those methods is by passing null as the argument.
+eg public static void aggregate(List<?> l1, List<?> l2){
+       l2.addAll(l1);
+}
+here the method addAll() is a class-level method as its parameter depends on its class type. The method signature of addAll() is addAll(Collection<? extends E> c). Recall that the compiler will eplace all type parameters in generic types with their bounds or Object if the type parameters are unbounded. Since Object is the ultimate superclass, any method which requires any subtype of Object cannot have Object substitute its parameter type.
+
+Invariance
+-responsible for ensuring compile-time type safety which is the promise of Invariants.
+If Book is a subtype of Bookmark, it does not mean that List<book> is a subtype of List<Bookmark>
+This means that you cannot assign an instance of List<Book> to List<Bookmark> and this is for ensuring compile-time type safety.
+eg for void go(ArrayList<Bookmark> items){
+   ...
+   }
+If we call go(new ArrayList<Book>()), the developer would assume that the input argument ArrayList<Book> would only store book instances. But within the method go(), a Movie object can be added eg items.add(new Movie) and this is possible because the ArrayList is defined as an ArrayList of Bookmarks(which has subtypes like Book, Movie or WebLink). We run into danger of a ClassCastException being thrown.
+Hence invariance is used to ensure compile-time type safety.
+Inheritence for generic types still holds.
+
+Invariance does not allow List<Bookmark> li = new ArrayList<>() but it allows List<Bookmark> li = new ArrayList<Bookmark>();
+- for the same type argument, inheritence of generic types still holds
+
+Arrays are Covariant
+- means that if Book is a subtype of Bookmark, then Book[] is a subtype of Bookmark[]. Because of that we can assign a Book[] to a Bookmark array. However this can lead to problems when another person is trying to accss the data as the assumptions about the stored data types will be diffrent.
+
+void go(Bookmark[] items{
+     items[0] = new  Movie(); // No compile-time issues, just ArrayStoreException
+}
+go(new Book[1]);
+
+PREFER USING LISTS OVER ARRAYS - as you will be able to catch such exceptions.
+
