@@ -5339,4 +5339,95 @@ enums with Constant-specific behavior
      - using switch statement
      - constant-specific methods
  
+Concurrency...Multithreading
+-when Java was created, the ability to run multiple processes was one of the aims. Multithreading is one of fundamental attributes of Java.
+- we know sequential programming but certain tasks block eg read(). Blocking halts other tasks thus wasting CPU time. Solution is concurrent programming
+-concurrent programming gives us better resource utilization and better throughput
+-compared with sequential programming, concurrent programming is complex
 
+Threads
+-Pre-OS era - computers ran a single program
+-OS allowed multiple processes to run concurrently
+    - each process gets own memory, file handles etc
+    - concurrency achieved through multitasking
+    - multitasking is switching CPU from one process to another
+    - multitasking does not imply parallelism - that is at any given instance of time, CPU is executing instructions from a single process
+    - the switching happens so fast that it gives us the illusion of parallelism
+    -concurrency leads to better resource utilization
+Thread
+- is a single sequential flow of control within a process
+- each thread is a light-weight process and each process can have multiple threads
+- threads share process-wide resources eg memory
+- each has its own PC(program counter), stack and local variables
+
+Thread benefits
+-exploiting multiple processors thus achieving parallelism
+- allow loosely-coupled designs
+- better throughput even in single CPU machines
+Thread Types
+- Daemon
+  - run in background
+  - background threads for tasks such as garbage collection
+- Non-daemon
+  - created within an application
+  - when we start our program, JVM creates a thread to run our main() called main thread. Thus a Java program always has at least one Non-daemon thread.
+  - JVM will not terminate if at least one non-daemon thread is running
+
+- a thread is an instance of java.lang.Thread or one of its subclasses
+- a task is defined by a class that implements the java.lang.Runnable interface
+- a thread needs a task to execute. Once given a task, a thread begins execution.
+- lets see how we can create a Task, a Thread and make the Thread execute the Task
+
+Launching a Thread
+-Create a Task
+	-ie create a Runnable object
+	eg Runnable task = new MyRunnable();
+	- Runnable has exactly one method called run(); So when a class implements the Runnable interface, it has to specify the contents of run() and thus create a task
+-Create Thread and give it its Task
+	Thread thread = new Thread(task);
+	-create an instance of Thread and give it the above task
+	- here we say that the thread is in a state called NEW
+-Start the Thread
+       - for this we invoke the start() method on the thread instance 
+       	 thread.start();
+       - no execution happens until we start() the thread.
+       - start() causes a new call stack to be created for this thread and the run() method is pushed onto that stack
+       - recall that every thread gets its own stack
+       - state of the thread is now RUNNABLE. Runnable does not mean that the run() method is being executed. It just means that it is ready to run.
+
+- Thread Scheduler
+
+  RUNNABLE<<------------------>>RUNNING
+	|<<------BLOCKED<<-------|
+
+       - responsible for moving the thread from RUNNABLE state to RUNNING state. Once the thread is in RUNNING state, its call stack is active and the method on top of the running stack is executed
+       - thread scheduler is responsible for moving the thread back to RUNNABLE state from the RUNNING state so that it can move some other thread into RUNNING state from RUNNABLE.
+       - there is also another state called BLOCKED. There are a few reasons why a thread can get into this state
+       	       - due to blocking during an input/output operation like read()
+       - a thread can only get into a BLOCKED STATE from a RUNNING state and from BLOCKED state it has to return to RUNNABLE. Also a thread cannot get into the BLOCKED state from RUNNABLE. Meanwhile, a thread can change from RUNNING to RUNNABLE without going through the BLOCKED state.
+       - thread scheduler makes decisions on who runs and how long they run
+       - there is no guarantee on how the thread scheduler behaves - sometimes it will run a thread to completion whilst other times it may switch. So with this in mind, you should never rely on scheduler's behavior
+
+Thread.sleep(x) --> puts the current thread to sleep for x milliseconds
+- can be used with webcrawlers. We need to avoid overburdening servers with HTTPRequests so in order to do so, we can delay the requests
+- also useful in running some background jobs periodically eg marketing emails but in general, such task scheduling can be handled in much comprehensive ways eg the Spring framework's Quartz scheduler
+- The disadvantage of using the Thread.sleep() method is that the time unit is only milliseconds. In Java 5 there was introduced the TimeUnit enum class which has different units of time eg DAYS, HOURS, MICROSECONDS, MINUTES etc. You can use it like so:
+  TimeUnit.SECONDS.sleep(3) instead of Thread.sleep(3000);
+
+-once a thread finishes its RUNNING state it goes into a state called DEAD or TERMINATED. Even though it still exists on the heap, it cannot be moved back into RUNNABLE state.
+
+Thread.currentThread() --> is a toString() method which prints [threadName, threadPriority, threadGroup] 
+-threadPriority - by default all threads get a priority of 5 (Thread.NORM_PRIORITY)
+-threadGroup is obsolete now. It is related to security and applets. It is supposed to allow you to group threads. Replaced by Thread pool executors
+
+setName(String) eg thread1.setName("Thread One");
+- setting name allows us to print the names of the threads running
+
+setPriority(Thread.MIN_PRIORITY), setPriority(Thread.MAX_PRIORITY), setPriority(Thread.NORM_PRIORITY), you can set any integer value between 1 (MIN_PRIORITY) & 10 (MAX_PRIORITY)
+- we can request that Thread Scheduler place higher priority of certain threads over others. Remember still that we cannot rely on Thread Scheduler's unpredictable behavior even when we attempt to set priorities. Setting priorities increases the likelihood of certain threads being executed first.
+
+join() eg t2.join() 
+- suspends the current thread until t2 dies.
+- there is an overloaded method in which you can specify in milliseconds the time of wait before resuming operation again eg t2.join(20); will wait 20 milliseconds and if t2 is still not dead, it will resume the execution of hte current thread.
+
+yield() - hint to scheduler that the task its willing to yield its current use of CPU. This alters the priority of the task and allows other lower priority tasks to be executed in the mix.
