@@ -4728,7 +4728,7 @@ developer 2 is assuming that static type is updated to Pager since it ran most r
 - type parameter thus cannot be used in a static method or static initializer.
 
 What happens under the hood when using generics
-Generics is a purely compile-time feature. At run-time there are not generics. It means that the compiler uses a feature called Type Erasure to remove all type arguments eg T and just represent the generic types without the types eg
+Generics is a purely compile-time feature. At run-time there are no generics. It means that the compiler uses a feature called Type Erasure to remove all type arguments eg T and just represent the generic types without the type parameters eg
 eg class Store <T> {
   private T a;
 
@@ -4888,7 +4888,455 @@ Arrays are Covariant
 void go(Bookmark[] items{
      items[0] = new  Movie(); // No compile-time issues, just ArrayStoreException
 }
-go(new Book[1]);
+go(new Book[1]); //this argument will be passed fine to go but inside there will be issues when a we try to save a Movie instance inside our Book[]
 
 PREFER USING LISTS OVER ARRAYS - as you will be able to catch such exceptions.
+
+Generic Methods
+-especially useful for implementing static utility methods.
+FAVOR GENERIC TYPES
+-appropriate for container type classes.
+- with generic methods, clients get the benefit of using different type arguments. We also get compile-time type safety and implicit casting
+
+- both static and instance methods can be generic
+- static utility methods are good examples for generics eg Collections class which has majority of its methods as generic methods.
+
+-Methods and constructors can have their own type parameters
+	 <T1, T2, ...> returnType methodName(T1, p1, T2 p2, ...){ ... }
+- note that the type parameter list goes between the method's modifiers and the return type
+Examples
+	<T> T[] toArray(T[] a); //java.util.Collection
+	static <T> boolean replaceAll(List<T> list, T oldVal, T newVal) { ... } from java.util.Collections
+
+	class GenericsDemo<T> {
+	  <T> void go(T object){ ... }
+        }
+-in this case, the method level parameter will override the class level parameter when the method is invoked. However, one should try to avoid writing same type parameter s in this way(above) as it can be confusing.
+
+	class GenericsDemo <E> {
+	  <T> void go(T obj1, E obj2) { ... }
+	}
+This one uses a combination of both method-level parameter T and class-level parameter. Note that we would get a compilation error if the above method is a static method because the class-level parameter cannot be used in a static context. It can only be used with instances.
+
+     <T extends List & Serializable> void(T object){ ... }
+- bounded type parameter which places restrcitions on the actual values the type could be. If you have a class in the list of bounds, it must be specified first and the rest have to be interfaces. Also the type (T) argument must be the subtype of all bounds
+
+You can also have 
+    class GenericsDemo <E> {
+       <T extends E> void go(T object) { ... }
+    }
+where the method level type parameter is extending the class-level type parameter
+OR
+	<T1, T2 extends T1> void go(T1 obj1, T2 obj2){ ... }
+
+Enclosing type need not be too generic
+
+Method invocation: Type argument inference
+- either automatically inferred by the compiler or explicitly specified in the method invocation statement.
+  <T> T go(T object){
+    return object;
+}
+Double val = go(1.0); --> here type argument is inferred to be the boxed primitive Double.
+String val = go("java"); //type argument inferred as String
+The diamond notation is also an example of implicit type argument inference
+List<String> list = new ArrayList<>();
+
+What if the type-parameter T appears only in the return type?
+- in such a case the compier infers the type argument from the calling context. 
+Only if the method does not specify a type parameters, then the target type comes into play.
+     	<T> T go(T a1, T a2) { ... }
+If there is more than one type, the type inferred will be the most specific common supertypes among the two arguments.
+Type inference rules are very complicated.
+
+Method invocation:
+Explicy Type Argument Specification
+eg class Generics Demo{
+     <T> void go(T object){ ... }
+   }
+
+   GenericsDemo gd = new GenericsDemo();
+   gd.<Double>go(1.0);  ---> type argument here is referred to as a type witness
+//when invoking the method on an object....
+   this.<Double>go(1.0);
+
+If you want to access an overriden method in the super class, you'd need to use the "super" keyword for instead of this reference
+-if the compiler cannot infer the type,
+
+<T extends E> GenericsDemo(T a) { ... }
+Generic constructors are very rare.
+
+
+public static void aggregate(List<E> l1, List<E> l2){
+       l2.addAll(l1);
+}
+// this code works now since the type can be inferred
+
+Bounded Wildcards
+-invariance is restrictive is certain harmless scenarios eg we can have a method called display that takes a list of Bookmarks and simply displays them --> void display(List<Bookmark> items). This method is not going to add anything so you can pass an object to them and not worry about say a Movie object beintg added to them so the method is harmless but due to invariance, we cannot pass a List<Book> or List<Movie> here as the parameter is List<Bookmark> so one thing to do would be to maintain separate methods as parameter types eg void display(List<Bookmark> items), display(List<Book> items), display(List<Movie> items) but this would not compile as these methods would be considered as duplicates because at runtime due to type erasure, all generics notation will be erased so we need to not that such kind of method overloading is not possible. It would also lead to duplicate code which is a maintenance nightmare.
+2 solutions here:
+- use an upper-bounded wildcard --> void display(List<? extends Bookmark> items) {...}. Thus now we can use the method with any subtype of Bookmark
+- use a generic method with Bounded Type parameter eg <T extends Bookmark> void display(List<T> items) { ... }
+
+Another restriction
+	void aggregate(List<Bookmark> list) {
+	    list.add(new Bookmark());
+	    list.add(new Book());
+	    list.add(new Movie());
+	}
+
+	aggregate(new ArrayList<Bookmark>());
+//Due to invariance the following cannot be passed -ie subtypes and supertypes. Due to invariance, the type of argument in the aggregate call has to have the exact type parameter of Bookmark
+	aggregate(new ArrayList<Book>());
+	aggregate(new ArrayList<Object>());
+
+In order to extend the flexibility of this function we can use a lower-bounded wildcard eg
+   void aggregate(List<? super Bookmark> list){
+      list.add(new Bookmark());
+      list.add(new Book());
+      list.add(new Movie());
+   }
+
+   aggregate(new ArrayList<Bookmark>());
+   aggregate(new ArrayList<Book>());   // still invalid
+   aggregate(new ArrayList<Object>());   // now valid since it is within the upper bounds
+
+Upper-bounded Wildcard
+eg List<? extends Bookmark> --> means some List of a subtype of Bookmark
+eg new ArrayList<Bookmark>(); or new ArrayList<Book>(); or new ArrayList<Movie>();
+
+- so upper-bounded wildcard is helping us work around the inflexibility of invariants since due to invariance List<Book> is not a subtype of List<Bookmark> and we cannot do the following assignment List<Bookmark> list = new ArrayList<Book>();
+
+eg our harmless display() method can be fixed with either
+1. using an upper-bounded wildcard
+   void display(List<? extends Bookmark> list){
+       for(Bookmark bookmark: list)
+           System.out.println(bookmark);
+    }
+
+OR by using a generic method
+2. <T extends Bookmark> void display(List<T> list){
+       for(Bookmark bookmark: list)
+           System.out.println(bookmark);
+}
+
+Note that the unbounded wildcard simply implies that Object is the boundary ie --> <?> is <? extends Object>
+Compiler's Type Safety Restriction
+-so an unbounded wildcard is also an upper-bounded wildcard but with Object as an invisible bound. Due to this, upper-bounded wildcards also have the same type safety restriction as the unbound wildcard that is we cannot invoke methods that use class-level type parameters with any arguments except null. 
+For example if wildcard type is an ArrayList, we cannot invoke the add() method as the add method uses a class-level type parameter. You can invoke it only by passing a null. In this way, type safety is ensured at compile time itself.
+This means that we can only do things where the input argument acts as a producer of data eg
+  void display(List<? extends Bookmark> list){
+       for(Bookmark bookmark: list)
+          System.out.println(bookmark);
+    }
+but does not consume data. 
+
+If we want to consume data, we must go with the Lower-bounded wildcard
+List<? super Bookmark>
+Because we are using the lower bound here, that means that we can assign a List<Bookmark> or a List<Object> here eg new ArrayList<Bookmark>(); or new ArrayList<Object>();
+Compiler restriction - we can invoke methods that use class-level type parameters only if the argument is of lower-bounded type or one of its subtypes
+eg 	 void aggregate(List<? super Bookmark> list){
+	     list.add(new Bookmark());
+	     list.add(new Book());
+	     list.add(new Movie());
+	 }
+Here type safety is conserved as the most specific object that can be passed here is a Bookmark and it can consume data from any of its subtypes.
+
+eg    void aggregate(List<? super Bookmark> list){
+           Bookmark b = list.get(0); // invalid as we could have an Object here and Object cannot be implicitly downcast to Bookmark. Instead we should have:
+	   Object o = list.get(0);
+         }     
+
+- note that lower bound is only for wildcards. It cannot be used with type parameters eg <T super bound> is illegal eg generic types and generic methods. The extends keyword applies to type parameters too.
+- a wildcard can have only a single upper and single lower bound
+    <? extends bound1 & bound2 & ...> is illegal
+USE BOUNDED WILDCARDS TO INCREASE API FLEXIBILITY
+- if the input parameterized type produces data --> use upper bounded wildcard <? extends bound>
+eg <T extends Bookmark> void display(List<T> list){
+       for(Bookmark bookmark: list)
+           System.out.println(bookmark);
+}
+- if the input parameterized type consumes data --> use lower bounded wildcard <? super bound>
+- if input parameterized type produces data & you don't know or care about the type argument, use the unbounded wildcard <?>
+- if parameterized type produces & consumes data --> use an exact match eg List<Bookmark> --> we cannot use wildcards here eg 
+     - we cannot use upper bounded wildcards here as extends does not allow us to consume data due to type safety restriction
+     - similarly we cannot use lower bounded wildcards here as the problem would be with producing data - we know that within the method, the input object can consume data from itself and any of its subtypes but when it comes to producing data, there is no guarantee that it would produce only lower bound or any of its subtypes. That is since the method can be invoked with say List<any supertype of the lower bound>, it can also contain some supertype objects which can lead to class cast exceptions at runtime.So it needs to be exact match like List<Bookmark> and we know exactly what that method can produce or consume.
+eg for List<? super Bookmark> list = new ArrayList<Bookmark> list; we can do
+   list.add(new Book()); but when it comes to iterating through the items in list, we do not know whether they are of type Bookmark, Object or any other of Bookmark's supertypes.
+Mnemonic to help rememeber:
+PECS -> producer-extends, consumer-super
+
+Methods in Collections Class
+<T> boolean addAll(Collection<? super T> c, T...elements)
+-here we are going to add all the elements to the collection c so c is going to consume and hence uses super - recall consumer-super from PECS
+
+<T> void copy(List<? super T> dest, List<? extends T> src)
+-here dest is going to consume elements from src so dest uses super. src is going to be producing data for dest and so src extends.
+
+boolean disjoint(Collection<?> c1, Collection<?> c2) - this method returns true if the two input collections have no elements in common so here an unbound wildcard is used because we do not care about the elements in the collection. Moreover, they are producers of data, that is their elements are iterated over but no data is added to the collections.
+
+<T> boolean replaceAll(List<T> list, T oldVal, T newVal) - replaces all occurrences in a list of one value with another value. Here an exact match is needed as list is both producing as well as consuming data. eg
+    for(int i = 0; i < size; i++){
+      if(oldVal.equals(list.get(i)))
+          list.set(i, newVal);
+     }
+here as list is iterated it is acting as a producer and also as a consumer when the set method uses a class level type parameter.
+
+When to use wildcard or generic method?
+- Use Generic Method
+  - if dependencies exist among types of 1 or more method parameters and/or return type. ie the same parameter appears multiple times in the method declaration  eg <T> boolean replaceAll(List<T> list, T oldVal, T newVal) or <T> List<T> nCopies(int n, T o)
+Otherwise use wildcard eg void display(List<? extends Bookmark> list)
+boolean disjoint(Collection<?> c1, Collection<?> c2) which can be written as <T1, T2> boolean disjoint(Collection<T1> c1, Collection<T2> c2) but there is no need to use to write more
+
+Generics Restrictions
+-Primitives - type argument cannot be primitive eg Store<int> intStore = new Store<int>(); is invalid
+-Static context - A class level parameter cannot be used in a static context. If our static method needs to be generic, we should define a generic static method which defines its own type parameters
+-method overloading - we cannot overload methods that will have the same signature after type erasure eg 
+	void print(Set<String> set) {}
+	void print(Set<Integer> set) {}
+would both look like void print(Set set) {} after type erasure and hence it is an invalid overload.
+- generics and arrays do not mix well eg you cannot create an array of parameterized type eg new Array<String>[1]. You can also not create an array of a type parameter E[1]. Both of these will give a GenericArrayCreationError at compile time. 
+The reason why we cannont create a generic array is because it is not type safe eg
+lets assume that generic arrays can be created:
+     Object[] stringList = new ArrayList<String>[2];
+     stringList[0] = new ArrayList<String>();
+     stringList[1] = new ArrayList<Integer>(); --> this should not be possible but it is made possible as the reference type of stringList is of type Object and anything can be assigned. So at compile time, there would be no error but at runtime we would expect to get an ArrayStoreException for trying to store an element of wrong type in the array.
+Unfortunately, it would not happen here as there is type erasure leaves the code looking like:
+     Object[] stringList = new ArrayList[2];
+     stringList[0] = new ArrayList();
+     stringList[1] = new ArrayList();
+
+as all of the type arguments here get erased and we only have plain instances in the bytecode. Now there is no distinction between them and the interpreter will not throw an ArrayStoreException thus breaking type safety.
+
+reified 
+- arrays are said to be reified. It means that at runtime, arrays know the type of element that can be stored in the array. If you store a wrong type, you get an ArrayStoreException. The knowing and enforcing type constraint at runtime is what makes arrays reified.
+
+-on the other hand, generics are non-reified that is they enforce type constraints only at compile time. Type information is erased off and is not available at runtime.
+
+Exceptions
+- we cannot have generic Exceptions and ErrorTypes
+eg class MyException<T> extends Exception{
+   ...
+   }
+- if this was legal the we would have something like this:
+  try{ ... } catch(MyException<String> e){ ... } catch(MyException<Integer> e){ ... }
+But after type erasure the type arguments would go away and the catch arguments would be identical and that would be meaningless.
+
+Conclusion of Generics
+-main motivation is to ensure type safety at compile time rather than waiting till run time.
+
+Nested Classes
+- Java allows classes defined within other classes.
+- some of the Collection classes use them extensively.
+
+class Outer{
+      class Inner{
+      }
+}
+
+Why not have neste classes as top-level classes?
+- class pollution
+- functionality kept closer to original class.
+- better design - without nested classes we can have method pollution within the same class as the class is not modularized well enough
+- nested class serves its enclosing class
+
+Nested Classes
+-inner classes
+       - nonstatic member classes
+       - anonymous classes
+       - local classes
+-static member classes
+	-can never access the instance members of the enclosing class
+Visibility
+- nested classes can be declared with all the access levels eg private, default, public, protected just like any class member or variable
+- top level classes, however can only be either public or default
+- mutual accessibility of members including private
+
+Compilation
+- Java compiler will produce 2 class files - one for Outer.class and the inner one would be Outer$Nested.class.
+- in case of anonymous classes we would have Outer.class & Outer$1.class, Outer$2.class...This is because anonymous classes have no names and so numbers are used
+
+Nonstatic Member Classes
+- used when the inner class object needs access to the enclosing object so that it can access its instance members. Enclosing object is created first and then used to create the inner class object. Inner class object is simply an instance member of the enclosed object and hence we referred to the inner class as a non-static member class
+-since inner class object need access to enclosing objects, the inner class object would maintain a hidden reference to enclosing object. Building this reference takes space and time. 
+- Due to the hidden reference, the outer class object will not be garbage collected if the inner object is alive
+
+Common Usage
+- As an adapter
+  - adapters are used to produce different views of the outer object eg the collection view methods in the Map interface eg keySet(), values(), entrySet(); another example is the iterator() method in Set & List
+
+- a nonstatic member class cannot have static members. The reason for this is that static members should be accessible without creating an object. However, to access members in  a nested class we have to create an object of the enclosing class and once we create an object, we are now working with an instance.
+- another way of looking at it is that a nonstatic member class is like an in instance variable - that is it has something to do with the state of the outer object.
+
+Access
+From the enclosing class, we can access the inner class' method by innerObjecr.innerMethod()
+The inner class can access outer's members
+ eg go() --> calls outer class' go method if it does not have its own
+ this.go() //inner's go
+ Outer.this.go() if both inner and outer classes have the go() method
+
+Anonymous Classes
+- nameless
+- eg Set set = new TreeSet(new Comparator<String>() {
+     	       	   	       public int compare(String s1, String s2){
+			         return s1.length() - s2.length();
+				}
+			});
+Here we are creating an instance of TreeSet and the input to the TreeSet constructor is an instance of an anonymous class that is implementing the Comparator interface. Since we are creating an instance, the argument starts with the new keyword which is followed by the anonymous class declaration which starts with the name Comparator<> and is followed by () and then followed by the actual body of the anonymous class. Within the body, the implementation for the compare method is provided.
+There is no separate class name here. We are using the interface name itself directly to indicate that we are implementing it. 
+Anonymous classes are different from our regular interface implementation where we have a className followed by "implements" keyword followed by the interface name itself
+-with an anonymous class we are both declaring & instantiating it at the point of use.
+The whole expression above can be understood as an instruction to create an object of anonymous class that is inherited from Comparator. Under the hood the compiler will create a separate top-level class corresponding to the anonymous class and that class would implement the Comparator interface. So in bytecode there is no anonymous nested class. It is represented by a top-level class. Such anonymous classes would have class names such as Outer$1 or Outer$2 where outer is the name of the enclosing class
+
+Common Use
+- to create function objects. A function object has 2 properties
+     - method parameters are other objects eg compare took in two String objects s1 and s2
+     - exports only one method eg compare()
+So a function object is basically an instance of a type with these two properties.
+If type is an interface, we refer to the type as a functional interface
+
+Function objects can be implemented via anonymous classes. They can also be implemented via lambda expressions
+USE FUNCTION OBJECTS TO REPRESENT STRATEGIES
+
+Anonymous classes are good for defining function objects while nonstatic member classes are good for defining adapters.
+
+Anonymous Classes - Best Practices
+- should be short - 10 lines or fewer
+- anonymous classes are declared and instantiated at the point of use so an anonymous object is being created everytime that anonymous expression is being excecuted. If this expression is going to be excecuted frequently, then we are repetitively creating anonymous objects which could be very expensive.
+- in such cases we can use a private static final field to declare and instantiate the anonymous class eg
+
+private static final Comparator<String> STR_LENGTH_COMPARATOR = new Comparator<String>() {
+	public int compare(String s1, String s2) {
+	    return s1.length() - s2.length();
+	 }
+};
+
+By doing this, only one anonymous object will be created and we can use it by referring to the field name.
+Note that the diamond notation will not work with anonymous classes, it must be explicitly specified. Also note that the ending of the declaration is closed with a semi-colon because this is a statement.
+By declaring the anonymous object as a static final variable, we can put in a more descriptive name
+An anonymous class will have access to the enclosing class' members if and only if it occurs in a non-static context ie if an anonymous class is declared inside a static method, then it cannot access an instance member of the enclosing class ie no access to the enclosing class object.
+But if it is declared in an instance method, then it will not be an issue ie the anonymous class would have access to the enclosing class' member variables by maintaining a hidden reference.
+- as an anonymous class is nameless, it cannot have a named constructor. However, it can have an instance initializer for initializing any variables.
+
+Limitations
+- cannot inherit from multiple types - cannot implement multiple interfaces. Similarly we cannot extend one class and at the same time implement an interface
+-clients can invoke only members inherited from its supertype. It is impossible to invoke any members that are defined only in the anonymous class
+- instantiated only at the point of declaration
+- cannot be used with instanceof tests or anywhere class name is required
+
+Local Classes
+- just like local variables. They are classes that are defined within a method. This is when defining them outside wouldn't make sense.
+- instantiated inside the method
+- can have multiple constructors and supertypes
+- short for readability
+- any local variables accessed from the enclosing method should be final - ie either declared with the final keyword or never changed on the outside (effectively final)
+- local classes are very rarely used
+
+Static Member Classes
+-syntactically similar to nonstatic member classes but they are very different from them
+FAVOR STATIC MEMBER CLASSES OVER NONSTATIC
+- if you do not need access to the members of the enclosing instance, then a static member class is your solution. 
+- static member classes do not need to create a hidden reference and are thus more time and space efficient.
+- they are simply a static member of the enclosing class. This means that they can be accessed without creating an instance of the enclosing object just like a static field or method. eg Outer.StaticNested.someField
+-Creating an instance of a static member class is done as follows:
+	  Outer.StaticNested nested = new Outer.StaticNested();
+- note that you do not need an instance of the outer class to create an instance of the static member class.
+- can only access static members of enclosing class. 
+- you can think of static member classes as regular classes declared inside a class.
+- they can have static and instance members. Keep in mind that though it can have its own instance members, it cannot access the instance members of the enclosing class
+- can be non-instantiable by using a private constructor
+
+Common Uses
+- represent private components of enclosing objects
+- represent strategies
+- as public helper class
+
+enums
+- constant exporting classes have no type safety
+- code is brittle - unless client code is recompiled it will still be using outdated values
+- no namespace protection
+- not easy to print constant names
+- cannot iterate over constants of a group
+
+Instead of representing constants as primitives, we can refer to them as instances of classes
+enum is a class that defines a fixed set of constants
+enum constant:
+- full-blown objects
+- constants - static & final
+- same naming conventions as constants
+- enum constants are also referred to as elements, or members or enumerators of type
+JVM loads enum on first-use
+
+USE ENUMS INSTEAD OF INT CONSTANTS
+
+Enum Class
+-every enum is essentially a class that extends java.lang.Enum
+
+enum BookGenre { BIOGRAPHY, HORROR }
+
+upon compilation, BookGenre gets translated into a regular class that extends java.lang.Enum:
+
+public final class BookGenre extends java.lang.Enum{ 
+       public static final BookGenre BIOGRAPHY = new BookGenre("BIOGRAPHY", 0);
+       public static final BookGenre HORROR = new BookGenre("HORROR", 1);
+
+       public static BookGenre[] values();
+       public static BookGenre valueOf(java.lang.String);
+       static {};
+
+       private BookGenre(String name, int ordinal){
+           super(name, ordinal);
+       }
+}
+
+enums with State  & Behavior
+- enums can also be associated with state and behavior
+- Thus enums can have instance variables, methods and constructors with private access. Constructor cannot be public or protected because enums should not be instantiated or extended. Its access modifier by default is private (NOT DEFAULT)
+eg enum BookGenre{
+       BIOGRAPHY(12), <-- constants must come first!
+       HORROR(15); <-- semi-colon needed here because the enum body has more than just constants
+
+       private BookGenre(int minAgeToRead){
+           this.minAgeToRead = minAgeToRead;
+       }
+
+       private int minAgeToRead;
+       public int getMinAgeToRead(){
+           return minAgeToRead;
+       }
+}
+
+-enums can define static members explicitly. 
+
+Nested enums
+- enums can also be nested within a class or an interface
+eg public class Book{
+   	  public enum BookGenre{
+	      BIOGRAPHY(12),
+	      HORROR(15);
+	      
+	      private BookGenre(int minAgeToRead){
+	        this.minAgeToRead = minAgeToRead;
+	      }
+	      
+	      private int minAgeToRead;
+	      public int getMinAgeToRead(){
+	          return minAgeToRead;
+	      }
+	  }
+     }
+
+Here the enum is implicitly static. Cannot be an inner class as an inner class cannot have static members while an enum can have static members.
+Nested enum is implicitly static. It cannot access instance members of enclosing class.
+Since BookGenre is a nested static class, compiling Book.java would result in Book.class and Book$BookGenre.class
+To access an enum constant we would do Book.BookGenre.HORROR
+- what is the difference between a static member class and a nested enum?
+       static member class is instantiable whilst a nested enum is non-instantiable.
+       enums can be nested within other enums. Similarly, a static member class can also have an enum. However an inner class cannot have an enum. This is because enums are implicitly static while inner class cannot include any static items (since its top level class has to be instantiated first.
+ 
+enums with Constant-specific behavior
+-behavior specific to each enum.
+-can be done in 2 ways:
+     - using switch statement
+     - constant-specific methods
+ 
 
