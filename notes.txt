@@ -5431,3 +5431,78 @@ join() eg t2.join()
 - there is an overloaded method in which you can specify in milliseconds the time of wait before resuming operation again eg t2.join(20); will wait 20 milliseconds and if t2 is still not dead, it will resume the execution of hte current thread.
 
 yield() - hint to scheduler that the task its willing to yield its current use of CPU. This alters the priority of the task and allows other lower priority tasks to be executed in the mix.
+
+Race Condition
+Non-thread safe object leads to an incorrect program which leads to data corruption
+eg when we have shared mutable state
+Synchronization
+- how can we avoid the Race condition
+- we use Java's built in locking mechanism called Synchronization. 
+- the goal of Synchronization is to protect critical shared, mutable data
+SYNCHRONIZE ACCESS TO SHARED MUTABLE DATA
+- synchronized block has 2 parts:
+  - the lock
+  - code that needs to be guarded by lock
+- the lock is an object reference
+
+syntax:
+	synchronized(lock){
+	  //code block
+	}
+
+eg public void go(){
+     //non-critical stuff
+     synchronized(this){
+      //critical statement 1
+      //critical statement 2
+    }
+    non-critical stuff
+}
+
+Locking
+- every object has a lock
+- this lock is automatically acquired by the thread entering the synchronized block
+- the lock is automatically released when thread exits synchronized block or due to exception
+- at most one thread can acquire an object's lock
+- if a thread wants to enter a synchronized block, but the lock is unavailable, then the thread goes into BLOCKED state
+- these built-in locks associated with objects are called intrinsic or monitor locks
+
+- a synchronized method is simply a shorthand for the synchronized block
+
+eg synchronized void makeWithdrawal(int amount){
+     if(balance >= amount){
+         balance -= amount;
+      }
+}
+
+We simply include the keyword "synchronized" in the function declaration and with that, our method is guarded by a lock. This lock is the object on which the method is invoked.
+
+Locks & Synchronized Methods
+- locks are per object and not per method
+  - thus if one thread has an object's lock, it is unavailable to all to other threads and they cannot access ANY of that object's synchronized methods
+  - no restriction on unsynchronized methods
+  - static synchronized methods use Class object for lock --> so every class has a single lock as does every object.
+
+Coordinating Access to a Variable
+- synchronize everywhere the variable is used
+- in a multithreaded program if a thread writes a value into a variable there is no guarantee that that value will be visible to another thread trying to another thread reading the variable's value. (probably kept that way due to performance)
+- if we need to guarantee an object's concurrency across threads, we need to synchronize it everywhere
+
+synchronization = mutual exclusion + reliable thread communication
+
+-Always use the same lock when guarding a shared mutable variable
+eg public class BankAccount implements Runnable{
+       public synchronized void makeWithdrawal(int amount){
+           if(balance >= amount){
+	   balance -= amount;
+       }
+       
+       public void deposit(int amount){
+           String s = new String();
+	   synchronized(s){
+	     balance += amount;
+	     }
+	}
+    }
+In the code above we are trying to protect the balance variable but we have incorrectly used the locks. At the synchronized void makeWithdrawal(int amount) method, the object passed to synchronized is an instance of BankAccount. Whereas in the deposit(int amount) method, the object to be synchronized is a String object reference, s. So two different locks are being used to guard the same variable and so the effect of synchronization is lost as two threads can both the using the two synchronized method concurrently.
+
