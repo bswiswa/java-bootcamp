@@ -5506,3 +5506,144 @@ eg public class BankAccount implements Runnable{
     }
 In the code above we are trying to protect the balance variable but we have incorrectly used the locks. At the synchronized void makeWithdrawal(int amount) method, the object passed to synchronized is an instance of BankAccount. Whereas in the deposit(int amount) method, the object to be synchronized is a String object reference, s. So two different locks are being used to guard the same variable and so the effect of synchronization is lost as two threads can both the using the two synchronized method concurrently.
 
+Java Memory Model
+-defines the ordering of operations
+-typically threads deal with their own instructions and do not need to know anything about other threads. Furthermore, communicating with other threads can be expensive
+-thread coordination is needed for shared, mutable data. Thread coordination is the program's responsibility not JVMs
+-JVM implements Java's memory model and when we use the "synchronized" keyword, JVM recognizes this as the need to use interthread coordination. It then inserts special instructions called memory barriers that would instruct the underlying architecture to do the necessary memory coordination between the cache and the shared memory.
+The exact time at which JVM inserts the memory barriers is specific to the implementation.
+-happens-before ordering
+ - if write operation happens before read operation, we can be sure that the results are visible to the read action.
+ - program order - > each action in a given thread happens before any other action that comes later in the thread.
+ - lock - got to be same lock! Releasing a lock happens before any subsequent acquisition of that same lock
+- volatile variable - volatile is a keyword when declaring a variable. A write to such a variable happens before every subsequent read of that variable regardless of the thread doing the read
+- start() - a call to a start() method on a given thread happens before any other action that happens on that thread.
+- join() - all actions in a particular thread happen before the thread that successfuly returns from a joing() on that thread.
+-interrupt() - a method that can be invoked on a thread. To make it stop its current task and do something else. Generally used to terminate threads.
+- Object.finalize() - invoked by the garbage collector when it detects that there are no more references to the object. Subclasses of the Object can overwrite finalize to perform any clean up operations before the object is garbage collected.
+- transitivity - if action A happens before action B and Action B is before action C then it follows that action A is before action C.
+- to summarize the JMM rules ensure that different threads have a consistent view of a shared state.
+
+Volatile Variables
+- an alternative way to ensure memory visibility - ie once a particular method writes a value to the volatile variable, it is guaranteed that all subsequent reads will see that particular value on all threads. Any write to a volatile variable establishes a happens-before ordering with subsequent reads of that same variable regardless of thread.
+- synchronization is an alternative that also helps in doing that.
+- stored in main memory - not registers or cache
+- used with shared mutable variables not with local variables
+- synchronizaton ensures mutual exclusion. 
+
+-Locking can  guarantee both visibility and mutual  exclusion while volatile variables can only guarantee visibility.
+
+Use synchronization or volatile variable?
+-  if one thread writes & others read -> no race condition.
+
+If there can be a race condition
+- need to use synchronized
+
+Atomic Variables
+- introduced in Java 5 - better volatile variables
+- limited to single variables and cannot lock a block of code like the synchronized
+
+public class IDGenerator{
+       private long id;
+
+       long getNewId(){
+           return id++;
+       }
+}
+getNewId() is supposed to return the next id value, which should be unique. id here is a shared variable between threads but there is a race condition here as the increment operation is not atomic and involves 3 subinstructions: 
+	   read id --> increment id --> write id
+-Thus two threads can be inside the getNewId() method at the same time and both can read the id at the same time and thus both would increment it and the value they return would be identical. This is called safety failure.
+-Declaring id as volatile is not going to help as it only guarantees memory visibility, but cannot prevent simultaneous access and update.
+-We can get atomicity by making getNewId() a synchronized method eg
+
+public class IDGenerator{
+       private long id;
+
+       synchronized long getNewId(){
+           return id++;
+       }
+}
+
+- The intention here is to perform a simple increment operation and synchronization can be expensive just for doing that. Main cost is due to thread suspension and resumption when the lock is unavailable for a thread. Thread suspension means that a thread in RUNNING state is moved to BLOCKED STATE until the lock becomes available after which it is placed in RUNNABLE state before being brought to RUNNING state. All the states of threads being managed by the Thread Scheduler
+- This is serious overhead just for doing a simple increment. It is made worse if there are several threads contending for the lock.
+- The solution is to use Atomic Variables
+
+Atomic Variables
+- atomic variable classes are from package java.util.concurrent.atomic
+- these classes support atomic operations on SINGLE variables
+
+import java.util.concurrent.atomic.AtomicLong;
+
+public class IDGenerator{
+       private AtomicLong id = new AtomicLong();
+       
+       public long getNewId(){
+           return id.incrementAndGet();
+	}
+}
+
+Atomic variables have same memory visibility as volatile variables but also have atomicity benefit of synchronization but without using locks(ie no overhead of thread suspension and resumption)
+- so the atomic variable is thread safe.
+
+-internally, the atomic variable uses a volatile variable but they additionally support atomicity thus they are better volatile variables.
+
+- atomic variables are fine-grained and make a single variable work atomically. synchronization however works on a whole block.
+
+- atomic variables do not involve locks and hence avoid thread suspension and resumption. Instead they use an approach called Compare and Swap
+
+eg looking at the source code for the incrementAndGet() method
+
+   public final long incrementAndGet(){
+       for(;;){
+         long current = get();
+	 long next = current + 1;
+	 
+	 if(compareAndSet(current, next))
+	     return next;
+        }
+    }
+
+Here we have an infinite loop with an if condition where we compare the current value and the next value. If they are equal, then that means that another thread has updated it and so the loop iterates again to until it has current != next and then it can exit out of the loop.
+- this approach of retrying is much more efficient that thread suspension and resumption that we have with synchronization.
+- since there is no blocking with atomic variables, their operations are called non-blocking as opposed to the blocking due to synchronization.
+- the technique used  in the incrementAndGet() method is referred to as optimistic locking as the value of the next variable is computed first based on the optimistic assumption that no other thread has updated and set that same value. When the optimistic assumption is true, the shared variable is updated to the next value without locking. If the assumption is false, the work is lost, but still there is no locking involved.
+- traditional locking with synchronization is also referred to as pessimistic locking
+- atomic variables are especially best for generating unique values
+
+Atomic Variable Classes
+Divided into 4 types:
+	Scalars
+		- AtomicLong, AtomicInteger, AtomicBoolean, AtomicReference
+	Arrays
+		- AtomicLongArray, AtomicIntegerArray, AtomicReferenceArray
+	Field updaters
+		- AtomicLongFieldUpdater, AtomicIntegerFieldUpdater, AtomicReferenceFieldUpdater...these are reflection-based utility classes that wrap around corresponding volatile variables and can perform atomic operations on them. One use case is when you have a given shared variable that you would like to mostly be used as a simple volatile variable but occassionally you would want to perform some atomic operations on it. For this, using scalar atomic classes could be unnecessary so you can use these FieldUpdater classes only when atomicity is required and for the rest of the time, the volatile field would be used as is.
+	Compound variables
+		 - AtomicMarkableReference, AtomicStampedReference --> used if we want to couple together an object reference with either a boolean flag or an integer respectively
+
+Note that AtomicLong and AtomicInteger are subclasses of java.lang.Number whilst the rest are subclasses of the Object class.
+
+-Atomic variables support lock-free, thread-safe programming on single variables with the memory semantics of volatile variables.
+
+Synchronization Best Practices
+- SYNCHRONIZE EVERYWHERE VARIABLE IS ACCESSED
+- Use the same lock to guard a shared mutable variable
+- if a method modifies a static field, you MUST synchronize access to this field even if the method is typically used only by a single thread. Even though you may have a static field being accessed by a single thread as per design, an underlying framework eg web application environment may still be multithreaded
+- keep synchronized blocks small - minimizes wait time
+- try to move time-consuming activities out of synchronized blocks without affecting thread safety.
+- avoid excessive synchronization - there are costs due to synchronization eg thread suspension and resumption, lock acquisition and release, ensuring consistent memory visibility, oversynchronization also limits JVM's ability to optimize code excecution
+- lost opportunities for parallelism in multi-core systems
+- if you are not sure whether to synchronize, don't do it but document that the class is not thread-safe. StringBuffer uses synchronization but mostly by a single thread and that affected performance and this is why StringBuilder replaced it in in Java 5 when synchronization is not needed.
+ 
+Thread Cooperation & Management
+New states that a thread can be in
+- on invoking the wait() method, the thread moves from RUNNING state to WAITING state
+- when a cooperating thread invokes either notify() or notifyAll(), on the common lock, then all threads waiting on that lock would move to BLOCKED state.
+- finally, the thread that acquires the lock goes from RUNNABLE to RUNNING state.
+
+- note that there is also a timed version of wait called TIMED_WAITING. Invoking joing(long) or sleep(long) would invoke this state (where long parameter is the time in milliseconds).
+-when a cooperating thread invokes either notify() or notifyAll(), on the common loc\
+k, then	all threads waiting or time_waiting on that lock would move to BLOCKED state.
+- if the timeout happens, then any thread in timed_waiting state goes into RUNNABLE  state directly.
+- note that there are also NEW AND DEAD states
+- use of wait() and notify() was common before Java 5 introduced some more concurrency utilities. Thus you can expect to deal with wait() and notify() when working with legacy code.
