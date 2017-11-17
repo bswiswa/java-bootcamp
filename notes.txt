@@ -5753,6 +5753,163 @@ public interface ReadWriteLock{
 - the class implementing this interface is ReentrantReadWriteLock so you create an instance of it eg
   ReadWriteLock readLock = new ReentrantReadWriteLock()
 
+Concurrency Utilities
+-NOTE - a thread in a synchronized block can still be context-switched ie, the thread scheduler can still change it from RUNNING to RUNNABLE state but it still keeps the lock at the first thread. Be sure to include any variables used by the condition predicate INSIDE the synchronized block otherwise you may have threads that wait forever sometimes or execute well at other times.
 
+PREFER CONCURRENCY UTILITIES TO wait AND notify
+
+Concurrency Utilites
+- Executor framework (ExecutorService, Callable, Future)
+- Synchronizers (eg CountDownLatch)
+- Concurrent Collections (eg BlockingQueue)
+
+Executor Framework
+- there is a close connection between tasks and threads. So far, for every new task, we have had a new thread. This works for small-scale applications but it has limitations when used in large-scale applications. 
+- this is due to the cost of thread creation and teardown costs. There is also instability as there is no limit to the number of threads that can be created
+
+PREFER EXECUTORS AND TASKS TO THREADS
+- Executor framework will handle tasks internally.
+- Executor framework is a very flexible & powerful task execution framework
+- it consists of a work queue and thread pool
+- in the Executor framework, a thread in the pool is used to execute a task and when it is done, it returns to the pool so it can be used again later rather than being garbage collected.
+- the thread pools can be of different types allowing the specification of how many there will be and how long they should be available --> this allows thread management
+
+How does the thread pool fix the thread-per-task limitation?
+- once threads are created, they can be readiliy reused without having to wait for a newly created thread --> this minimizes thread creation & teardown costs increasing application responsiveness
+- we can set the pool size and thus avoid overconsuming valuable memory resources and avoiding the instability of boundless thread creation.
+
+Executor Framework
+	 public interface Executor{
+	     void execute(Runnable command);
+	  }
+-Executor interface represents the task execution framework. It has one method, execute() which takes a Runnable as input. Tasks are submitted via the execute method()
+
+thread-per-task Executor
+       class ThreadPerTaskExecutor implemements Executor{
+           public void execute(Runnable r){
+	       new Thread(r).start();
+	   }
+       }
+- this snippet shows how you can implement a thread-per-task-executor. A new thread is being spawned for every new task
+
+Executor executor = new ThreadPerTaskExecutor();
+executor.execute(someRunnable);
+executor.execute(someOtherRunnable);
+
+Single Threaded Executor
+-does not create a new thread for each task but directly invokes the run() method on the Runnable instance
+
+      class SingleThreadedExecutor implements Executor{
+          public void execute(Runnable r){
+	      r.run();
+	  }
+      }
+
+- here, each task is executed sequentially as part of the caller's thread itself.
+- this means that we can now decouple task submission from task execution
+- other executors can be found in the java.util.concurrent.Executors. They have been created as static factory methods eg newFixedThreadPool, newCachedThreadPool, newSingleThreadExecutor, newScheduledThreadPool
+- the first 3 here return executors that implement the ExecutorService interface which extends Executor. Thus the return type of those 3 is an ExecutorService
+- newScheduledThreadPool returns an executor that implements ScheduledExecutorService which in turn extends ExecutorService.
+- executors returned by these methods are instances of a class called ThreadPoolExecutor
+
+newFixedThreadPool(int nThreads)
+- fixed-size thread pool. 
+- creates up to nThreads as tasks are submitted
+- if pool size is not yet reached and there is a new task, a new thread is created even if there is an idle thread already
+- once the pool size is reached, then idle threads start to be reused or the task is queued until a thread becomes idle. At any point of time, at most nThreads will be executing tasks.
+- new thread is added if an existing thread dies due to exception
+- unlimited thread idle time
+- good for heavily loaded production servers
+- pool size can be reconfigured by invoking the setMaximumPoolSize(int newThreadMax) method from the class ThreadPoolExecutor eg ((ThreadPoolExecutor) fixedPool).setMaximumPoolSize(100)); [ note that we need to cast it to ThreadPoolExecutor before we invoke the method because newFixedThreadPool returns an ExecutorService type]
+- newSingleThreadExecutor is the same as newFixedThreadPool(1), except that it cannot reconfigure the thread pool size limit.
+
+newCachedThreadPool
+- tasks are not queued (like thread-per-task). Thus there is no bound to thread creation
+- every new task will reuse an idle thread or create a new one. Thus it has better responsiveness than newFixedThreadPool as it reused threads more
+- however, a thread has a max idle time of 60seconds, after which it is terminated and removed from cache
+- good for lightly loaded servers as we do not have to worry about the unboundedness of thread creation
+
+newScheduledThreadPool(int corePoolSize)
+- fixed size pool for delayed & periodic task execution
+
+Executor Service & Future
+- ExecutorService is an interface that extends Executor. Executor only has one method - execute() whereas ExecutorService is much more extensive and has methods for submitting tasks, and managing termination
+
+submit()
+- better task submission method compared to execute()
+- takes a task as input and returns an instance of Future, which is another interface in the java.util.concurrent package
+eg ExecutorService executor = Executors.newFixedThreadPool(10);
+   Future future = executor.submit(task);
+- note that here task can be a Runnable or a Callable which is another interface in the	java.util.concurrent package (Runnable is from java.lang package whereas java.util.concurrent package was introduced in Java 5)
+- thus a task can be a Runnable or a Callable meaning that we have overloaded submit methods
+- Callable is a better task representation for cases when executing the task will take some time and we would need the result of the task for further processing eg downloads
+- submit() returns an instance of Future. Future has a method called get which blocks until the task is completed (Future.get()). If the task is already complete, it returns immediately. 
+- Thus Future.get() is similar to the wait() method --> that is it does not waste CPU cycles but blocks until the task is completed.
+- if the task is Callable, then Future.get() returns the result computed by the task. If the task is Runnable, get() returns null.
+
+java.util.concurrent.Callable
+	public interface Callable<V> {
+	    V call() throws Exception;
+	}
+Callable interface has single method called call(). call() method unlike run() [in Runnable], returns a result and can also throw an exception. The value returned by Future.get() method on a Callable is actually the value returned by the call() method.
+-note that run() does not throw a checked exception. However, run method can throw an unchecked exception, thus you can catch an unchecked exception and throw a checked exception and with that, the method will be terminated with a stacktrace.
+- if the task does not have to return a value, you can use Runnable
+
+ExecutorService Lifecycle
+- How does ExecutorService manage termination processes?
+- lifecycle has 3 states - Running, Shutting down and Terminated
+- Running
+	- the initial state
+	- tasks accepted and executed
+- Shutting down
+  	- no new tasks accepted here (results in run time exception)
+	- initiated by shutdown() or shutdownNow() methods
+	  - shutdown() - closes in a graceful way by executing all submitted tasks first
+	  - shutdownNow() - executor closes abruptly interrupting active tasks(via interrupt() calls) and ignoring queued tasks(they will be returned so they can be saved for later processing)
+- Terminated
+	- isTerminated() method checks if executor has reached this state or not
+	- why do we want to know whether an executor terminated?
+	  - monitoring state of application before shutting down
+	  eg executor.shutdown() //initiate shutdown nicely by finishing active tasks
+	  if(!executor.awaitTermination(60, TimeUnit.SECONDS)){
+	      executor.shutdownNow(); //if not closed in 1 min, be more forceful
+	      if(!executor.awaitTermination(60, TimeUnit.SECONDS))
+	        System.err.println("Could not terminate!!");
+          }
+
+Future
+- instance returned on invoking the submit() method on the executor.
+- a future instance represents the lifecycle of a task ie it can be used to track the progress of a submitted task
+- you can think of future as an object that has been pushed into the future but with some incomplete computation which is needed by some other parts of the program. Thus it can be used to look back and determine whether certain computations have been computed or not.
+  public interface Future<V>
+      boolean cancel(boolean mayInterruptIfRunning);
+      boolean isCancelled();
+      boolean isDone();
+      V get() throws InterruptedException, ExecutionException;
+      V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
+}
+- the methods of the Future interface do represent the lifecycle of a submitted task
+cancel() - cancels a task and returns true. Returns a false if task cannot be cancelled
+isCancelled()
+isDone() - true if task was completed due to normal operation or exception or cancellation
+get() 
+get(long timeout, TimeUnit unit) - a timely version of get which waits at most for the specified amount of time for the computation to complete. Throws a TimeoutException if task is not completed in the specified time.
+
+Both versions of get() block and so when interrupted they respond by throwing InterruptedExceptions. They will throw ExecutionException if the underlying task itself threw some exception. The actual cause of the ExcecutionException can be inspected by using the Throwable.getCause() method.
+Both versions of get() can also throw an unchecked exception called CancellationException if the task was cancelled.
+
+The actual Future instance returned by the executor's submit() method is an instance of a class called FutureTask which implements Future
+Summary
+	1. Get Executor
+	  ExecutorService executor = Executors.newFixedThreadPool(10);
+        2. Submit Task
+	  Future future = executor.submit(task); //task can be Runnable or Callable
+	3. Fetch Result 
+	  future.get(); // blocks until task is completed. returns result if task is
+	  		   Callable or null if task is Runnable
+	4. Shutdown Executor
+	  executor.shutdown();
+	  
+ 
 
 
