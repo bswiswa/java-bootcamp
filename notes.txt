@@ -5647,3 +5647,112 @@ k, then	all threads waiting or time_waiting on that lock would move to BLOCKED s
 - if the timeout happens, then any thread in timed_waiting state goes into RUNNABLE  state directly.
 - note that there are also NEW AND DEAD states
 - use of wait() and notify() was common before Java 5 introduced some more concurrency utilities. Thus you can expect to deal with wait() and notify() when working with legacy code.
+
+Thread interruption
+- sometimes we want to stop tasks before they complete eg if a download is taking too long, or a user clicks on "Cancel", or we need to shutdown the application eg due to a memory leak we may need to stop a server but we need to make sure that we terminate gracefully
+- Java does't allow forcibly stopping a thread.Thread class has a method named stop() for forcibly stopping a thread but they have been deprecated. Along with suspend() and resume()
+- Java instead provides Interruption which is a cooperative mechanism for requesting a thread to stop
+- Java provides a cooperative mechanism rather than a forceful stop because
+  - it can leave shared objects in an inconsistent state. Thus a cooperative mechanism would allow for any necessary clean up to happen.
+
+Interruption
+- every thread has a boolean interrupted status (defaulted to false)
+- invoking interrupt() on a thread: sets interrupted status to true. It is a signal to the thread to stop what it is doing at its own condiitons/safely.
+
+-blocking methods eg (sleep() & wait()) try to detect when a thread has been interrupted and they try to return early. They respond by trying to clear the interrupted status ie setting the interrupted status to false and throwing an InterruptedException.
+- note that there is no guarantee on how quickly a thread detects interruption even though it happens fast in practice.
+
+-if the path your program takes does not involve blocking, you could have
+    public void run(){
+        while(!Thread.currentThread().isInterrupted()){
+	    ....
+	}
+    }
+
+or the alternative:
+    public void	run(){
+      	   while(!Thread.currentThread().interrupted()){
+	       ....
+        }
+    }
+-this clears the interrupted status and returns the previous value
+
+- if the thread is blocked due to the use of Stream IO, THEN THAT THREAD IS UNINTERRUPTIBLE
+  - Work around: close stream (throws an exception)
+- if a thread is blocked due to synchronized locks, THEN THAT THREAD IS UNINTERRUPTIBLE
+  -Use explicit locks instead
+- if a thread is blocked due to the use of NIO rather than Stream IO, then IT IS INTERRUPTIBLE
+
+Explicit Locks
+- introduced in Java 5
+- like synchronized they are used to control access to shared resources by multiple threads
+Common template
+
+import java.util.concurrent.locks.*;
+...
+
+Lock lock = new ReentrantLock();
+...
+lock.lock();
+
+try{
+	// critical section
+}finally{
+lock.unlock();
+}
+
+-it is critical to not to forget to unlock an explicit lock
+Lock interface
+
+public interface Lock{
+       void lock(); 
+       void lockInterruptibly() throws InterruptedException;
+       boolean tryLock();
+       boolean tryLock(long time, TimeUnit unit) throws InterruptedException;
+       void unlock();
+       Condition newCondition();
+}
+
+- lock() is used to acquire a lock
+- lockInterruptibly() - allows a thread to acquire a lock unless it is interrupted or the lock is not available. If a thread is waiting for a lock by invoking this method, then it can be interrupted by another thread by invoking the interrupt method. This throws an InterruptedException and the current thread's interrupt status is cleared. This will also happen if interrupt() method has been invoked on the thread then subsequently lockInterruptibly() is invoked
+- tryLock() - lock is acquired if lock is available
+- tryLock(long time, TimeUnit unit) - lock is acquired if it is free within a given waiting time. Like lockInterruptibly method, this one is also responsive to interruption.
+- unlock()
+There is a concept of acquisition count or hold count associated with each lock regardless of its kind(intrinsic or a Reentrant explicit lock)
+      - if a thread acquires the lock by invoking lock() or entering a synchronized block, then the holdCount is set to 1. If that same thread holding the lock invokes the lock() method again or by entering the synchronized block again, then the whole count is increased by 1. If thread invokes the unlock() method or exits the synchronized block, then hold count is decremented by 1. When the HOLDCOUNT REACHES 0, THE LOCK WILL BE RELEASED
+- a thread having a lock cannot enter another thread having the same lock.
+newCondition() returns an instance of Condition, which is an interface in java.util.concurrent.Locks.*; Like the wait() method, a Condition object allows one thread to suspend execution until notified by another thread. Condition object has replacements for Object methods such as wait(), notify() and notifyAll(). It includes methods such as await(), signal() and signalAll()
+- classes implementing the Lock interface must provide the same memory visibility semantics as intrinsic locks
+
+Fairness
+	ReentrantLock()
+	ReentrantLock(boolean fair) --> if fair = true -> first come first serve
+			      	    	by default, fair = false = cut the queue
+	- fair locks come with the overhead of threat suspension and resumption ie if a thread requests a lock and the lock happens to be available, ignoring the requesting thread and looking for some other older method to run first, slows down performance. Practically speaking it seems that it is good enough as long as a blocking thread gets its lock at some point of time. Only exception where fairness could be good is when locks are held for a long time.
+	- intrinsic also do not make any fairness
+
+Reentrant or Intrinsic Lock?
+Intrinsic - familiar and compact
+	  - automatically releases locks as opposed to forgetting to unlock() the lock which is critical for Reentrant locks. If you forget, other locks will wait for an indefinite amount of time
+	  - as good as Reentrant locks, performance-wise
+	  
+Reentrant - used when you need additional features like thread interruption while waiting for a lock.
+Reentrant locks give us a standard mutual exclusion lock that is only one thread at a time gets to hold the lock. This locking strategy hinders certain scenarios when it is ok for multiple threads to hold the lock simultaneously.
+eg multiple readers or single writer, but not both
+
+This can be achieved via a ReadWriteLock
+
+package java.util.concurrent.locks;
+
+public interface ReadWriteLock{
+       Lock readlock();
+       Lock writelock();
+}
+
+- here, to read critical data, you would first acquire a readlock by invoking the readlock() method. To write critical data, you would acquire a writelock by invoking writelock()
+- the class implementing this interface is ReentrantReadWriteLock so you create an instance of it eg
+  ReadWriteLock readLock = new ReentrantReadWriteLock()
+
+
+
+
