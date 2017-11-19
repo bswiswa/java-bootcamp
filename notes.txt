@@ -5969,3 +5969,89 @@ Anonymous Classes vs Lambdas
   - works only with functional interfaces
 
 Handling Dates & Times
+Background
+- it is difficult to model time for a computer in terms of days, months, years etc. Instead, it is represented as a single point on a timeline. An origin called epoch has been arbitrarily set as Jan 1, 1970 UTC (midnight) [also referred to as Unix time]
+-so for computers, time is measured forward and backward using epoch as the origin.
+UTC
+-UTC is short for Coordinated Universal time
+- it is the international time standard.
+- typical UTC day consists of about 86400 seconds. Occasionally, it can be 86401 or 86399 seconds long to account for the uneven rotation of the earch(wobbling or slowing down)
+- this difference of a second is called a leap second eg since Jan 1972, there have been about 27 leap seconds
+- UTC time is measured via atomic clocks which are highly precise. There are over 70 UTC time centers around the world, and an organization called BIPM which stands for International Bureu of Weights and Measures. BIPM uses the times reported by these different timing centers to compute the exact UTC time by using weighted averages.
+- computers have their own internal clocks to compute UTC time but may not reflect the leap seconds. Practically, this is not considered to be a big issue and JVM implementations do not handle leap seconds.
+- UT or universal time is another standard of time and it is based on astronomical observations(1884) rather than on atomic clocks. One of UT's versions called UT1 accounts for leap seconds. 
+-GMT (Greenwich Mean Time) was previously chosen as the world's standard of time. It was based on the notion of timezones across the world which vary in a few hours from GMT, which is by itself a timezone.
+- Greenwich is located in London which has an observatory called the Royal Observatory. GMT is measured at this observatory.
+- many times GMT is also alternatively referred to as UTC
+Daylight saving time (DST)
+- in summer clock is moved ahead, in winter the clock is moved back
+- DST complicates time because not all countries observe it and so we have situations in which countries in the same timezone will have different times.
+
+Calender Systems
+3 calendar systems based on astronoical cycles that can be used in computers: solar, lunar and lunisolar
+Solar Calendars
+      - Gregorian (most widely used, inroduced on October 15, 1582), Julian(was introduced by Julius Caesar). These two calendars differ in the handling of leap years. In Gregorian, a leap year is exactly divisible by 4 but not divisible by 100 with the exception of years divisible by 400.
+      - Julian year leap year is always exactly divisible by 4
+Lunar Calendar - Islamic calendar
+Lunisolar - Buddist, Chinese, Hindu Lunisolar, Hebrew
+
+Gregorian calendar is most widely used now since it was introduced on October 15, 1582. The Gregorian calendar applied to dates before October 15, 1582 are referred to as Proleptic Gregorian Calendar
+- Java 8 Date and Time API uses the standard called ISO 8601 which is an international standard based on the Proleptic Gregorian Calendar). It means that Gregorian rules for leap years are applied for all time.
+- ISO 8601 was created by the International Standards Organization (ISO), based in Geneva
+- ISO 8601 standard aims to avoid the risk of misinterpreting date and times when they are passed between systems across national boundaries. Thus it is like the Unicode character set.
+
+Date & Calendar Classes
+Commonly used
+- java.util.Date(there from the beginning jdk 1.0), java.util.Calendar, java.util.GregorianCalendar, java.util.TimeZone
+- The Date class is considered to be having several usability issues
+eg to represent June 8th, 2016:
+   Date date = new Date(116, 5, 8); 
+-this is because Date class uses 1900 as the starting point. Note also that June corresponds to 5 and not 6 since months are counted with January as month 0.
+- note that we can also pass negative values to the year parameter in order to represent years before 1900.
+- to address these issues with time, java.util.Date was mostly deprecated in jdk 1.1 and other classes were added including java.util.Calendar, java.util.GregorianCalendar and java.util.TimeZone. Date class is still there for the sake of backward compatibility but most of its constructors and methods have been deprecated.
+- Calendar class also has some issues as it still uses 0 - 11 for the months but it can receive full years in the declaration eg 2016 instead of 116.
+- Calendar and Date classes are mutable ie not thread safe. Moreover, Calendar and Date were now being used interchangeably which was confusing for developers. Because of this some developers would use third-party libraries instead eg Joda-Time
+
+New Date & Time API
+Limitations of Legacy API
+-what is the old API bad at and how does the new API address these?
+1. Date in old API includes both date & time (no separate representation). Thus you always have dates and times(hours, minutes, seconds)
+2. Year in Date has offset 1900
+3. Month ranges from 0 - 11
+4. Use Date or Calendar??
+5. Mutable - not thread safe
+
+New Date & Time API
+- java.time package
+- inspired by Joda-Time
+- based on ISO-8601 - same as the Prolyptic Gregorian Calender so if you need accurate historic dates prior to 1582, this calender is not suitable.
+- mostly immutable classes - thread safe
+- no public constructors - static factories eg of
+
+CONSIDER STATIC FACTORY METHODS INSTEAD OF CONSTRUCTORS
+Commonly Used Classes
+- LocalDate - represents a date in the ISO 8601 calendar system. Has no time component or time zone
+- LocalTime - represents only time in the ISO 8601 calendar system. Has no date or timezone information
+- LocalDateTime - includes both date and time information. Has no timezone information 
+- ZonedDateTime - includes date, time and also timezone
+- Instant -represents a single instantaneous point in the timeline. Can be used for recording event timestamps.
+- Duration
+- Period
+	- Duration and Period are classes that can represent an amount of time. Period represents an interval between two dates. Duration represents an interval of time.
+All these classes implement an interface called Temporal which is part of java.time.temporal. Thus these classes are implementing an interface that is part of a subpackage.
+This Temporal interface extends another interface called TemporalAccessor. TemporalAccessor includes only read methods.
+
+Other commonly used classes in java.time are
+- Duration
+- Period
+	- Duration and Period are classes that can represent an	amount of time.	Perio
+d represents an	interval between two dates. Duration represents an interval of time.
+  	- Period and Duration implement an interface called TemporalAmount also from java.time.temporal package
+
+ISO 8601 Format
+[date]T[time][zone offset]
+eg an instance of ZonedDateTime could be 2017-07-03T01:00-7:00[America/Los_Angeles]
+   an instance of LocalDate would be 2017-07-03
+   an instance of local time would be 01:00
+   an instance of LocalDateTime would be 2017-07-03T01:00
+   finally the UTC time itself does not have an offset but instead has a character Z at the end eg 2017-07-03T01:00Z[UTC] SO Z IMPLIES UTC OR GMT
