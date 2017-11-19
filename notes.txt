@@ -5754,7 +5754,7 @@ public interface ReadWriteLock{
   ReadWriteLock readLock = new ReentrantReadWriteLock()
 
 Concurrency Utilities
--NOTE - a thread in a synchronized block can still be context-switched ie, the thread scheduler can still change it from RUNNING to RUNNABLE state but it still keeps the lock at the first thread. Be sure to include any variables used by the condition predicate INSIDE the synchronized block otherwise you may have threads that wait forever sometimes or execute well at other times.
+-NOTE - a thread in a synchronized block can still be context-switched ie, the thread scheduler can still change it from RUNNING to RUNNABLE state(but without taking away the lock). Be sure to include any variables used by the condition predicate INSIDE the synchronized block otherwise you may have threads that wait forever sometimes or execute well at other times (erratic behavior)
 
 PREFER CONCURRENCY UTILITIES TO wait AND notify
 
@@ -5910,6 +5910,62 @@ Summary
 	4. Shutdown Executor
 	  executor.shutdown();
 	  
- 
+ Tasks with Time Limits
+- Future has a timed get method, method(long timeOut, TimeUnit unit) which throws a TimeOutException after the time has elapsed.
+- ExecutorService also has an invokeAll method which takes a collection of Callable tasks, a timeout specification and returns a collection of corresponding Future objects
+  <T>List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException
+- it blocks until each task completes or until the time expires. If time expires, then any incomplete tasks will be cancelled and this is taken care of implicitly by the involeAll method itself.
+- so for a returned Future instance, you can invoke get() after checking that it was not cancelled via the isCancelled() method in the Future instance.
 
+Lambdas
+- introduced in Java 8
+- are basically functions that can be passed around. Considered to be one of the most important features introduced in Java 8
+- Java is an object oriented programming language whilst lambdas are a functional programming construct. So Java now has elements of functional programming
+- Lambdas are enable us to write faster and more compact programs. They are well suited for concurrent programming.
+- Before lambdas, anonymous classes were used to pass around functionality
 
+What is a lambda
+- a lambda is an anonymous function
+- it is a compact way to define functions
+- useful for passing around functionality
+- other languages that support lambda functions are LISP, Scala, C#, Ruby, C++, Python
+- lambda syntax:
+  (type param1, type param2, ...)->{ 
+  	//statement 1
+	//statement 2
+	...
+	return;
+   }
+
+- lambda expression can be passed to a functional interface variable
+- such interfaces can be used to define a strategy interface
+- since a functional interface has a single abstract method,  it is also called a Single Abstract Method (SAM) interface
+Lambda example
+       Set<String> set = new TreeSet<String>(new Comparator<String>(){
+           public int compare(String s1, String s2){
+	       return s1.length() - s2.length();
+	   }
+	});
+- here an anonymous object is passed as a Comparator to the constructor of TreeSet
+- the anonymous class can be replaced with a lambda expression as follows:
+
+  Set<String> set = TreeSet<String>((String s1, String s2)-> {return s1.length() - s2.length(); });
+- this can further be simplified by omitting the parameter types since they can be inferred by the compiler from the type argument specified in the instance creation expression
+Set<String> set = TreeSet<String>((s1,s2)-> {return s1.length() - s2.length(); });
+Note that such type inferring may not be possible for all lambda expressions
+-If the body of the anonymous function consists of a single line we can write it as
+Set<String> set = TreeSet<String>(s1,s2)->s1.length() - s2.length()
+
+Note that a lambda can only be applied to a variable that is a functional interface and not any other kind. A lambda expression can only be in implementation of a functional interface. It has to be functional interface with only one abstract method otherwise it will be unclear which method the lambda expression is implementing
+
+Anonymous Classes vs Lambdas
+- Anonymous Class
+  - has an associated object and is more verbose
+  - instatiated on every use(unless declared as singleton)
+  - target type (class/interface) can have multiple methods
+- Lambdas
+  - no associated object(thus more efficient), compact representation
+  - memory is allocated only once for method
+  - works only with functional interfaces
+
+Handling Dates & Times
