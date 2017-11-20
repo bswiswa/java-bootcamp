@@ -6055,3 +6055,104 @@ eg an instance of ZonedDateTime could be 2017-07-03T01:00-7:00[America/Los_Angel
    an instance of local time would be 01:00
    an instance of LocalDateTime would be 2017-07-03T01:00
    finally the UTC time itself does not have an offset but instead has a character Z at the end eg 2017-07-03T01:00Z[UTC] SO Z IMPLIES UTC OR GMT
+
+Databases: An Introduction
+DBMS
+- a DataBase Management System is software for storing and retrieval of data
+- MySQL is one such DBMS.
+- Relational Database Management System examples include MySQL, Oracle, Microsoft SQL Server
+- More recently another time of database called NoSQL has become popular including MongoDB, Apache Cassandra, Redis --> these are especially useful when dealing with massive amounts of data.
+
+- relational data model was invented by Edgar Codd from IBM. His relational data model revolutionized databases
+Some of the benefits associated with RDBMS
+- Structured Query Language (SQL)
+- Fast data access
+- Integrity Constraints
+- Concurrent Access
+
+Databases also use locking mechanisms to protect data.
+
+Database Schema
+	 public class User{
+	     private long id;
+	     private String name;
+	     private String gender;
+	     ...
+	 }
+
+	 Relation Schema/Entity
+	 User(id: bigint, name: varchar(200), gender: varchar(15));
+
+- while SQL is a standard language, the different vendors like MySQL or Oracle, implement it differently.
+- columns in table are referred to as fields whilst rows are referred to as tuples or records
+
+Designing Databases
+- Once you have the business requirements in place, you have to design the database. It is a critical part and the aim is to reduce redundancy of data.
+- In order to reduce redundancy, we use normalization
+- normalization has several rules to help reduce redundancies
+
+Normal Forms
+- 1NF - First Normal Form (1970). Introduced by Edgar Codd
+- 2NF - 1971
+- 3NF - 1971
+- BCNF - Boyce-Codd Normal Form (1974)
+- 4NF, 5NF, 6NF
+
+In practice we expect the design to either be 3NF or BCNF
+- BCNF has low reduncancy
+- If a particular table is in BCNF, it also means that it is in 3NF, 2NF and 1NF
+
+1NF
+- Requires that each attribute be atomic ie each cell in the table should have only one value
+  - no comma separated values
+  - 1NF can cause reduncy as it increases storage and updates
+  - deletion and insertion anomaly - if you want to change one thing, you have to change it in all other rows because if you do not update them all, you end up with inconsistent data.
+
+-there can be multiple keys in a table - Candidate keys. These columns would be used to uniquely identify a row eg title, publication date, publisher name --> these 3 can be our candidate keys
+-int ID fields are preferred for primary keys due to their better performance.
+- every table must have a primary key and this key should not have a NULL value. Other keys can have NULL
+
+2NF
+- partial redundancy is when a field's value is the f(another field) where another field is present multiple times in the table eg "publisher name" --> "publisher address"
+- this is called a functional dependency. We can decompose BOOK table into separate PUBLISHER and BOOK tables. Now we would have a MANY-TO-ONE relationship between the BOOK and PUBLISHER tables ie a single publisher can publish many books 
+- Need to decompose the table into multiple tables
+- a single author can write multiple books. A single book can have multiple authors --> this is called a MANY-TO-MANY relationship. We need to introduce a relationship table or a linking table eg BOOK_AUTHOR table which will have foreign references to rows in the BOOK and AUTHOR tables
+- there is also a ONE-TO-ONE relationship
+
+BCNF
+
+3NF
+If a relationship is in 3NF, it is also in 2NF and 1NF
+- can have some redundancy. you have TRANSITIVE DEPENDENCY: KEY --> X --> A
+
+-while normalization is good in reducing redundancies, it can however affect performance. To address redundancies we decompose the table into smaller tables that do not violate the rules. **ALWAYS DO THIS WITH PERFORMANCE IN MIND**
+
+Read more on these normalizations
+
+SQL Statements Classification
+Data Manipulation Language (DML)
+     SELECT, INSERT, UPDATE, DELETE
+Data Definition Language (DDL)
+     CREATE DATABASE, CREATE TABLE, CREATE INDEX
+     ALTER TABLE, ALTER INDEX
+     DROP DATABASE, DROP TABLE, DROP INDEX
+
+DML queries are responsible for manipulating data that is already present in a database
+
+DDL is about defining the data we are going to store eg defining data types for all columns. Typically, DDL commands are executed on the server instance itself and not from your application. It is the DML queries that typically come from the application in response to some user actions (for that, the JDBC API would be used)
+
+
+Note that when inserting strings into SQL, we use single quotes around the string eg
+     INSERT INTO Authors (name) VALUES ('John Abbott');
+When there is an apostrophe within the string we have to use double quotes on the outside to store it properly eg
+     INSERT INTO Authors (name) VALUES ("Mark O'Neill");
+
+MySQL has storage engines that determine how MySQL stores data as well as which features are available.
+The two most commonly used ones are InnoDB and MyISAM
+- InnoDB supports foreign keys and transactions [transactions are compound statements that evaluate at once and remove the risk of partial executions, thus all of the statements have to be executed successfully or none of them is executed at all]
+- MyISAM does not support foreign keys or transactions. It support full-text search which is useful for text searching. Inno-DB does not have this. However, as an alternative to MyISAM you can use a library like Apache Solr
+
+
+
+
+
