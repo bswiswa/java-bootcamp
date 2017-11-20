@@ -6152,6 +6152,22 @@ The two most commonly used ones are InnoDB and MyISAM
 - InnoDB supports foreign keys and transactions [transactions are compound statements that evaluate at once and remove the risk of partial executions, thus all of the statements have to be executed successfully or none of them is executed at all]
 - MyISAM does not support foreign keys or transactions. It support full-text search which is useful for text searching. Inno-DB does not have this. However, as an alternative to MyISAM you can use a library like Apache Solr
 
+JDBC API & JDBC Driver
+JDBC stands for Java Database Connectivity
+JDBC is a standard database-independent interface. This means that it can be used with different data sources as well as other tabular sources eg spreadsheets. 
+JDBC API's main packages are java.sql and javax.sql
+java.sql is the core JDBC API whilst javax.sql extends the functionality in java.sql and is mainly used in Java EE applications.
+To interact with a specific data source, a JDBC driver that is specific to that source is needed. A JDBC driver is simply a collection of classes.
+There are 4 types of JDBC drivers - type 1 to 4
+Type 1 - also referred to as JDBC-ODBC bridge driver
+       - ODBC stands for Open Database Connectivity
+Type 2 - also referred to as JDBC-Native API Driver
+Type 3 - also referred to as JDBC-Net Driver
+Type 4 - also referred to as simply JDBC driver
+
+Type 4 is typically written purely in Java. Type 4 is one of the most commonly used followed by Type 2.
+Type 4 driver interacts directly with the database whilst other types have another layer in between them and the database.
+
 
 
 
