@@ -5968,6 +5968,154 @@ Anonymous Classes vs Lambdas
   - memory is allocated only once for method
   - works only with functional interfaces
 
+Lambda scope
+-lamdas can access local variables
+eg 
+public static void go(){
+       int count = 0;
+       for(int i = 0; i < 5; i++){
+           new Thread(()-> System.out.println(count) ).start();
+       }
+}
+- recall that a Thread takes in a Runnable. Runnable has only one method run() that has to be implemented so it can be an appropriate functional interface
+- when a lambda or an anonymous class captures a local variable like this, it is referred to as a closure.
+- note that the variable captured has to be effectively final so it cannot be altered during the operation eg
+public static void go(){
+       int count = 0;
+       for(int i = 0; i	< 5; i++){
+          new Thread(()-> System.out.println(count++) ).start();//Error ! CAPTURED VARIABLE MUST BE EFFECTIVELY FINAL
+       }
+}
+ OR
+public static void go(){
+       int count = 0;
+       for(int i = 0; i < 5; i++){
+          new Thread(()-> System.out.println(count) ).start();
+       }
+       count++; //Error! CAPTURED VARIABLE MUST BE EFFECTIVELY FINAL
+}
+
+We can use our go() method above to see why captured variables are kept final. When go() runs, it is placed on the stack together with its local variable count. go() will launch our anonymous thread and it will also run independent of go(). If go() completes running, it is taken off the stack together with its local variables but the thread may still be executing. If the thread changes the value of count inside of it, then it also expects to alter the value of count in the go() method which no longer exists at that time and this causes errors.
+Similarly if count is incremented outside of the threads, then we have to update its value in all of the threads as well.
+To avoid all of this and keep it simple, the captured variable is kept effectively final by either declaring it as final or by not changing it at all.
+Note that for static variables, it is fine since the variable is always available however it is not thread safe as the different threads are sharing mutable data eg
+
+static int global = 0;
+public static void go(){
+       int count = 0;
+       for(int i = 0; i < 5; i++){
+          new Thread(()-> System.out.println(count) ).start();
+       	  new Thread(()-> System.out.println(global++) ).start();
+       }
+}
+
+Note that for objects we can pass them as captured variables and we can change their states within threads but we CANNOT REASSIGN THEM as that would make them not effectively final from an object stand point. We can only change their state with no issues but not reassign them eg
+
+int count = 0;
+List<Integer> obj = new ArrayList<>();
+public static void go(){
+       int count = 0;
+       for(int i = 0; i < 5; i++){
+           new Thread(()-> System.out.println(count) ).start();
+       	   new Thread(()->{
+	       obj.add(count);
+	       int temp = obj.get(0);
+	       trick.set(0, temp++);
+	    }).start(); // can change object state 
+       }
+}
+
+It is however not recommended to do it like this because we are sharing mutable objects in threads and so it is not thread-safe.
+
+- you cannot shadow a local variable directly within a lambda but you can do so in a nested class or an anonymous class
+eg 
+public static void go(){
+       int count = 0;
+       for(int i = 0; i < 5; i++){
+           new Thread(count -> System.out.println(count) ).start();
+       }
+}
+
+The above code will not work because the part of the lambda expression "count->" is effectively redeclaring count
+This will also not work:
+public static void go(){
+       int count = 0;
+       for(int i = 0; i < 5; i++){
+           Consumer<Integer> consumer = c -> { int count = 2; };
+       }
+}
+For the same reason.
+However we can use a nested class
+public static void go(){
+       int count = 0;
+       for(int i = 0; i < 5; i++){
+           new Thread(()-> {
+	   int count = 1;
+	   System.out.println(count) ).start();
+       }
+}
+
+-thus you cannot shadow a local variable directly within a lambda but you can do so in a nested class or an anonymous class
+
+Functional Interfaces
+- functional interfaces define a single abstract method
+- Funcitional interfaces with semantics 
+  - Comparator & Comparable
+  - Runnable & Callable
+- Java 8 has very generic functional interfaces that only define a structure and have no semantics. They are part of java.util.function
+- as much as possible it is recommended to use standard functional interfaces so that when we look at some code we can quickly know what it will do.
+eg Predicate
+   @FunctionalInterface
+   public interface Predicate<T>{
+       boolean test(T t);
+   }
+it represents a boolean expression that uses an object of type T
+- the annotation makes the compiler make sure that this interface only has one method and is hence a functional interface
+
+Function
+    @FunctionalInterface
+    public interface Function<T, R>{
+        R apply(T t);
+    }
+Input: object of type T
+Output: object of type R
+A function functional interface is about transformation. There is also a UnaryOperator<T> which is a subinterface of Function but only works on the same type of input and produces the same type of output.
+We can make a composed function as well using andThen --> this takes a function and also returns a function
+eg Function<String, String> htmlCleaner = d -> Indexer.strinpHtmlTags(d);
+   Function<String, String> removeKeyWords = d -> Indexer.removeKeyWords(d);
+   
+   Function<String, String> docProcessor = htmlCleaner.andThen(removeKeyWords);
+   
+   transform(doc, docProcessor);
+
+Consumer and Supplier functional interfaces
+Consumer has a single method called accept which takes a passed argument and returns a void.
+Supplier takes no parameters but returns something.
+A supplier has a get() method which returns something.
+A consumer has an accept() method which takes a parameter and return nothing eg the forEach() function available on List
+  eg List<Integer> intList = Arrays.asList(1,2,3,4);
+     intList.forEach( i -> System.out.println(i));
+
+java.util.logging package for logging
+
+When you are dealing with primitives be careful when you use them in the Function<T,R> interfaces because they autobox them which is not very efficient. An alternative is to seek a more specific standard functional interface which is made for primitives eg use an intToDoubleFunction which take primitives directly.
+
+Method references
+- work with functional interfaces
+- is simply a reference to a method, just like we have object references
+- since Java 8 we can pass references to methods as arguments. This means that we are able to pass behavior.
+- this is just like lambdas except for lambdas we were defining the behavior directly in the body of the lambda. If you have the same logic encapsulated in a method's body you can just use a method reference as an alternative.
+There are 3 kinds of method references
+1. ClassName::staticMethod --> for static methods only
+eg Function<String, String> stopWordRemover = Indexer::removeStopWords; 
+Note that we do not need specify the parameters here because the parameters are implicit in the method name itself;
+2. Method references - objectRef::instanceMethod
+   eg targetDocuments.forEach(System.out::println);
+- note that this shows that out is an object in the System class
+- you get a compilation error if you try objectRef::staticMethod
+3. ClassName::instanceMethod
+   -JVM automatically invokes the instanceMethod on the object
+
 Handling Dates & Times
 Background
 - it is difficult to model time for a computer in terms of days, months, years etc. Instead, it is represented as a single point on a timeline. An origin called epoch has been arbitrarily set as Jan 1, 1970 UTC (midnight) [also referred to as Unix time]
@@ -6168,7 +6316,8 @@ Type 4 - also referred to as simply JDBC driver
 Type 4 is typically written purely in Java. Type 4 is one of the most commonly used followed by Type 2.
 Type 4 driver interacts directly with the database whilst other types have another layer in between them and the database.
 
-
+desc command is used to show an overview of a table in SQL. eg desc Book will show all the column or field names as well as their types.
+If you want the results to be printed one on top of the other you can put a \G modifier at the end eg select title, kid_friendly_marked_by from Book \G;
 
 
 
