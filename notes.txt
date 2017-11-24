@@ -6319,5 +6319,3 @@ Type 4 driver interacts directly with the database whilst other types have anoth
 desc command is used to show an overview of a table in SQL. eg desc Book will show all the column or field names as well as their types.
 If you want the results to be printed one on top of the other you can put a \G modifier at the end eg select title, kid_friendly_marked_by from Book \G;
 
-
-
